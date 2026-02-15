@@ -7,7 +7,7 @@
 
 **Full-Stack Application for Automated PCB Inventory Management**
 
-Built for **INVICTUS Hackathon 2025** by Team Vibe Coders
+Built for **INVICTUS Hackathon 2026** by Team Vibe Coders
 
 ---
 
@@ -544,10 +544,10 @@ For issues or questions:
 - ✅ Production-ready deployment
 
 ---
-**Built with ❤️ for INVICTUS Hackathon 2025**
+**Built with ❤️ for INVICTUS Hackathon 2026**
 
-*Team Electrolyte Solutions - ISTE VESIT Organization*
+*Team Vibe Coders - ISTE VESIT Organization*
 
 ---
 
-**Last Updated:** February 2025
+**Last Updated:** February 2026
