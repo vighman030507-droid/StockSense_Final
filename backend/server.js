@@ -16,9 +16,20 @@ const PORT = process.env.PORT || 5001;
 /* ---------------- MIDDLEWARE ---------------- */
 
 // Enable CORS (allow frontend on 3000)
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://stock-sense-final.vercel.app'
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 
 // Parse JSON body
@@ -38,7 +49,7 @@ app.get('/health', async (req, res) => {
   try {
     // Test database connection
     const result = await pool.query('SELECT NOW()');
-    
+
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -75,8 +86,8 @@ app.get('/', (req, res) => {
       pcbs: '/api/pcbs',
       production: '/api/production',
       analytics: '/api/analytics',
-      excel: '/api/excel'   
- },
+      excel: '/api/excel'
+    },
     documentation: 'See README.md for API documentation',
   });
 });
@@ -93,7 +104,7 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
-  
+
   res.status(err.status || 500).json({
     success: false,
     error: err.message || 'Internal server error',
@@ -117,10 +128,10 @@ const server = app.listen(PORT, () => {
 // Graceful shutdown
 const gracefulShutdown = async () => {
   console.log('\n⚠️  Shutting down gracefully...');
-  
+
   server.close(async () => {
     console.log('✓ HTTP server closed');
-    
+
     try {
       await closePool();
       console.log('✓ All connections closed');
