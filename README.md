@@ -1,553 +1,806 @@
-# PCB Inventory Management System
+# StockSense — PCB Inventory Automation System
 
-![Node.js](https://img.shields.io/badge/Node.js-16+-green)
-![React](https://img.shields.io/badge/React-18.2-blue)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue)
+![Node.js](https://img.shields.io/badge/Node.js-16%2B-green)
+![React](https://img.shields.io/badge/React-18%2B-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-**Full-Stack Application for Automated PCB Inventory Management**
+**Full-Stack Application for Automated PCB Inventory and Production Management**
 
-Built for **INVICTUS Hackathon 2026** by Team Vibe Coders
-
----
-
-## 🎯 Overview
-
-A comprehensive inventory management system designed for PCB manufacturing operations with automated stock tracking, Bill of Materials (BOM) management, multi-mode production entry, and real-time analytics.
-
-### ✨ Key Features
-
-- 🔐 **JWT Authentication** - Secure user authentication
-- 📦 **Component Inventory** - Track components with low-stock alerts
-- 🔧 **PCB Configuration** - Define PCBs with BOM mapping
-- 🏭 **Production Entry** - Two modes:
-  - PCB-based (quantity × BOM)
-  - Component string ("BZ/IC1/VR1")
-- 🔒 **Transaction Safety** - All-or-nothing inventory deduction
-- 📊 **Analytics Dashboard** - Real-time insights with charts
-- 📥 **Excel Integration** - Import/export functionality
-- ⚠️ **Procurement Triggers** - Automatic alerts (< 20% threshold)
-- 🔍 **Lot Traceability** - Complete production tracking
+Built for **INVICTUS Hackathon 2026** by Team Vibe Coders.
 
 ---
 
-## 🏗 Tech Stack
+## 🌐 Live Deployment
 
-### Backend
-- **Runtime:** Node.js 16+
-- **Framework:** Express.js
-- **Database:** PostgreSQL 12+
-- **Authentication:** JWT
-- **Excel Processing:** XLSX
+**Live Application:**  
+https://stock-sense-final.vercel.app/login
 
-### Frontend
-- **Framework:** React 18
-- **Build Tool:** Vite
-- **Routing:** React Router v6
-- **HTTP Client:** Axios
-- **Styling:** Tailwind CSS
-- **Charts:** Recharts
-- **Notifications:** React Hot Toast
+**Production API:**  
+https://stocksense-final.onrender.com
+
+**GitHub Repository:**  
+https://github.com/vighman030507-droid/StockSense_Final
 
 ---
 
-## 📁 Project Structure
+## 🏗️ Production Architecture
+
+```text
+                         StockSense
+                             |
+                             v
+                  React + Vite Frontend
+                             |
+                       HTTPS REST API
+                             |
+                             v
+                  Node.js + Express API
+                             |
+                             v
+                    PostgreSQL Database
+                             |
+                             v
+                       Neon PostgreSQL
 ```
-JR-75-Invictus/
-├── backend/              # Node.js + Express API
-│   ├── server.js        # Main server file
-│   ├── config/          # Database & app config
-│   ├── controllers/     # Route controllers
-│   ├── middleware/      # Auth & validation
-│   ├── routes/          # API routes
-│   ├── services/        # Business logic
-│   └── sql/             # Database schemas
+
+### Production Deployment
+
+```text
+User Browser
+     |
+     v
+Vercel
+     |
+     v
+StockSense React Frontend
+     |
+     | HTTPS API Requests
+     v
+Render
+     |
+     v
+StockSense Node.js / Express Backend
+     |
+     v
+Neon PostgreSQL
+```
+
+The production system uses:
+
+- **Frontend:** Vercel
+- **Backend:** Render
+- **Database:** Neon PostgreSQL
+- **Source Control:** GitHub
+
+Production authentication, database connectivity, CORS, and frontend-to-backend API communication have been successfully verified.
+
+---
+
+# 📋 Project Overview
+
+StockSense is a full-stack PCB inventory automation and production management system designed to digitize and centralize PCB component inventory, PCB records, production tracking, analytics, authentication, and Excel-based data operations.
+
+The system replaces fragmented spreadsheet-based workflows with a centralized web application backed by PostgreSQL.
+
+---
+
+# 🎯 Key Objectives
+
+- Centralize PCB component inventory
+- Track PCB and BOM information
+- Monitor production activity
+- Track component consumption
+- Identify stock shortages
+- Provide inventory and production analytics
+- Support Excel-based data operations
+- Provide authenticated access
+- Create a scalable foundation for future inventory intelligence
+
+---
+
+# ✨ Features
+
+## 🔐 Authentication
+
+- JWT-based authentication
+- User login
+- User registration
+- Current-user authentication
+- bcrypt password hashing
+- Role information
+- Protected API routes
+
+---
+
+## 📦 Component Inventory
+
+Manage PCB components and their inventory information.
+
+Capabilities include:
+
+- Component records
+- Inventory quantities
+- Component identification
+- Stock management
+- Inventory updates
+- Component-related operations
+
+---
+
+## 🖥️ PCB Management
+
+Manage PCB-related records and BOM information.
+
+The PCB module provides functionality for:
+
+- PCB records
+- BOM-related information
+- Component associations
+- PCB inventory relationships
+- PCB management operations
+
+---
+
+## 🏭 Production Management
+
+Track PCB production activity through the production module.
+
+Production functionality includes:
+
+- Production records
+- Production quantities
+- Production status
+- Component requirements
+- Production-related inventory operations
+
+---
+
+## 📊 Analytics
+
+StockSense includes analytics functionality for monitoring inventory and production activity.
+
+The analytics system provides the foundation for:
+
+- Inventory analysis
+- Production analysis
+- Stock trends
+- Component usage
+- Production metrics
+
+---
+
+## 📑 Excel Operations
+
+StockSense supports Excel-based data operations using:
+
+- **Multer** for file uploads
+- **xlsx** for spreadsheet processing
+
+This allows spreadsheet-based inventory workflows to be integrated into the application.
+
+---
+
+# 🛠️ Technology Stack
+
+## Frontend
+
+- React
+- Vite
+- JavaScript
+- Axios
+
+## Backend
+
+- Node.js
+- Express.js
+- PostgreSQL
+- `pg`
+- JWT
+- bcrypt
+- dotenv
+- CORS
+- Multer
+- xlsx
+- Nodemon
+
+## Database
+
+- PostgreSQL
+- Neon PostgreSQL
+
+## Deployment
+
+- Vercel
+- Render
+- Neon
+- GitHub
+
+---
+
+# 🔌 API Structure
+
+The backend is organized into modular API route groups:
+
+```text
+/api/auth
+/api/components
+/api/pcbs
+/api/production
+/api/analytics
+/api/excel
+```
+
+Health check:
+
+```text
+/health
+```
+
+Production API:
+
+```text
+https://stocksense-final.onrender.com
+```
+
+---
+
+# 📁 Project Structure
+
+```text
+StockSense_Final/
 │
-├── frontend/            # React + Vite UI
+├── backend/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── routes/
+│   ├── sql/
+│   │   └── schema.sql
+│   ├── server.js
+│   └── package.json
+│
+├── frontend/
 │   ├── src/
-│   │   ├── api/        # API client (Axios)
-│   │   ├── components/ # Reusable components
-│   │   ├── context/    # Auth context
-│   │   ├── pages/      # 7 main pages
-│   │   └── App.jsx     # Main app
-│   ├── public/         # Static assets
-│   └── index.html      # Entry point
+│   │   ├── api/
+│   │   │   └── axiosInstance.js
+│   │   └── ...
+│   ├── package.json
+│   └── ...
 │
-└── README.md           # This file
+└── README.md
+```
+
+The exact project structure may evolve as development continues.
+
+---
+
+# 🚀 Local Development
+
+## Prerequisites
+
+Install the following:
+
+- Node.js
+- npm
+- Git
+- PostgreSQL or access to a PostgreSQL database
+
+---
+
+# 1. Clone Repository
+
+```bash
+git clone https://github.com/vighman030507-droid/StockSense_Final.git
+cd StockSense_Final
 ```
 
 ---
 
-## 🚀 Quick Start
+# 2. Backend Setup
 
-### Prerequisites
-
-Ensure you have the following installed:
-- **Node.js** 16 or higher
-- **npm** 8 or higher
-- **PostgreSQL** 12 or higher
-- **Git**
-
-### Installation
-
-#### 1️⃣ Clone Repository
 ```bash
-git clone https://github.com/ISTE-VESIT-ORG/JR-75-Invictus.git
-cd JR-75-Invictus
-```
-
-#### 2️⃣ Backend Setup
-```bash
-# Navigate to backend
 cd backend
-
-# Install dependencies
 npm install
-
-# Create database
-createdb stocksense
-
-# Run database schema
-psql -d stocksense -f sql/schema.sql
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your settings (see below)
-
-# Start backend server
-npm run dev
 ```
 
-**Backend will run on:** `http://localhost:5001`
+Create:
 
-#### 3️⃣ Frontend Setup
-```bash
-# Open new terminal
-# Navigate to frontend from project root
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+```text
+backend/.env
 ```
 
-**Frontend will run on:** `http://localhost:3000`
+Configure:
 
-#### 4️⃣ Access Application
-
-Open browser: **http://localhost:3000**
-
-**Default Login:**
-- Username: `admin`
-- Password: `admin123`
-
----
-
-## 🔧 Environment Variables
-
-### Backend `.env`
-
-Create `backend/.env` file:
 ```env
-# Server Configuration
-PORT=5001
 NODE_ENV=development
 
-# Database Configuration
-DB_HOST=localhost
+DB_HOST=your_database_host
 DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password_here
-DB_NAME=stocksense
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
 
-# JWT Configuration
-JWT_SECRET=your_super_secret_jwt_key_change_this
+JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=24h
 
-# Procurement Settings
-PROCUREMENT_THRESHOLD_PERCENTAGE=20
+FRONTEND_URL=http://localhost:3000
 ```
 
-### Frontend `.env` (Optional)
+Start the backend:
 
-Create `frontend/.env` file:
+```bash
+npm run dev
+```
+
+or:
+
+```bash
+npm start
+```
+
+---
+
+# 3. Frontend Setup
+
+Open another terminal:
+
+```bash
+cd frontend
+npm install
+```
+
+Create:
+
+```text
+frontend/.env.local
+```
+
+For local development:
+
 ```env
 VITE_API_URL=http://localhost:5001
 ```
 
----
+Start the frontend:
 
-## 📚 Features Documentation
-
-### 🏭 Production Entry Modes
-
-#### Mode 1: PCB-Based Production
-- Select a configured PCB
-- Enter quantity produced
-- System automatically deducts components based on BOM
-- Example: Produce 10 PCBs → Deducts (component qty × 10) from each component
-
-#### Mode 2: Component String
-- Enter component codes as string: `"BZ/IC1/VR1/CX1"`
-- System deducts 1 unit from each component
-- Automatic duplicate removal
-- Whitespace handling
-
-### ⚠️ Procurement Triggers
-
-- Automatically generated when stock < 20% of monthly requirement
-- One pending trigger per component
-- Manual resolution tracking
-- Detailed component information
-
-### 📥 Excel Import/Export
-
-**Import Features:**
-- Flexible column mapping
-- Row-by-row validation
-- Upsert support (insert or update)
-- Detailed error reporting
-
-**Export Features:**
-- Complete inventory list
-- Consumption history with filters
-- Low stock report with recommendations
-
----
-
-## 📡 API Endpoints
-
-### Authentication
-```
-POST   /api/auth/login          # User login
-GET    /api/auth/me             # Get current user
-```
-
-### Components
-```
-GET    /api/components          # List all components
-POST   /api/components          # Create component
-PUT    /api/components/:id      # Update component
-DELETE /api/components/:id      # Delete component
-GET    /api/components/low-stock # Low stock items
-```
-
-### PCBs
-```
-GET    /api/pcbs                # List all PCBs
-GET    /api/pcbs/:id            # Get PCB with BOM
-POST   /api/pcbs                # Create PCB
-POST   /api/pcbs/:id/components # Add component to BOM
-DELETE /api/pcbs/mappings/:id   # Remove component from BOM
-```
-
-### Production
-```
-POST   /api/production          # Create production entry
-GET    /api/production          # List production entries
-GET    /api/production/:id      # Get production details
-```
-
-### Analytics
-```
-GET    /api/analytics/top-consumed           # Top consumed components
-GET    /api/analytics/low-stock               # Low stock analytics
-GET    /api/analytics/production-efficiency   # Efficiency metrics
-```
-
-### Excel
-```
-POST   /api/excel/import/components  # Bulk import
-GET    /api/excel/export/inventory   # Export inventory
-GET    /api/excel/export/consumption # Export consumption
-GET    /api/excel/export/low-stock   # Export low stock
-```
-
-### Procurement
-```
-GET    /api/production/procurement/triggers          # List triggers
-PUT    /api/production/procurement/triggers/:id/resolve # Resolve trigger
-```
-
----
-
-## 💻 Development
-
-### Run Backend Only
 ```bash
-cd backend
 npm run dev
 ```
 
-### Run Frontend Only
-```bash
-cd frontend
-npm run dev
+The Vite development server will provide the local frontend URL.
+
+---
+
+# 🔑 Authentication
+
+The production system uses JWT authentication.
+
+The authentication flow is:
+
+```text
+User
+ |
+ | username + password
+ v
+POST /api/auth/login
+ |
+ v
+Express Backend
+ |
+ v
+PostgreSQL / Neon
+ |
+ v
+bcrypt password verification
+ |
+ v
+JWT generated
+ |
+ v
+Frontend stores authentication state
 ```
 
-### Run Both Servers
+Authentication endpoint:
 
-Open two terminals:
-
-**Terminal 1 (Backend):**
-```bash
-cd backend
-npm run dev
+```text
+POST /api/auth/login
 ```
 
-**Terminal 2 (Frontend):**
-```bash
-cd frontend
-npm run dev
+Current development/admin account:
+
+```text
+Username: admin
+Password: admin123
+```
+
+Do not use default credentials in a real production environment.
+
+---
+
+# 🌍 Production Deployment
+
+StockSense is currently deployed as a full-stack production application.
+
+## Frontend — Vercel
+
+- **Platform:** Vercel
+- **Repository:** `vighman030507-droid/StockSense_Final`
+- **Root Directory:** `frontend`
+- **Framework:** Vite
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+
+Production environment variable:
+
+```env
+VITE_API_URL=https://stocksense-final.onrender.com
+```
+
+Live frontend:
+
+https://stock-sense-final.vercel.app/login
+
+---
+
+## Backend — Render
+
+- **Platform:** Render
+- **Service:** `stocksense-backend`
+- **Repository:** `vighman030507-droid/StockSense_Final`
+- **Branch:** `main`
+- **Root Directory:** `backend`
+- **Build Command:** `npm install`
+- **Start Command:** `npm start`
+
+Production API:
+
+https://stocksense-final.onrender.com
+
+Render supplies the production `PORT` environment variable.
+
+---
+
+## Database — Neon
+
+StockSense uses PostgreSQL hosted on Neon.
+
+Current production database configuration:
+
+```text
+Project: StockSense
+Database: neondb
+Branch: production
+Region: AWS Asia Pacific Singapore
+```
+
+The backend connects to Neon using PostgreSQL and SSL configuration.
+
+---
+
+# 🔐 Production Environment Variables
+
+Frontend:
+
+```env
+VITE_API_URL=https://stocksense-final.onrender.com
+```
+
+Backend uses environment variables for:
+
+```text
+NODE_ENV
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+JWT_SECRET
+JWT_EXPIRES_IN
+FRONTEND_URL
+```
+
+Sensitive credentials must never be committed to GitHub.
+
+Do not commit:
+
+```text
+.env
+.env.local
+database passwords
+JWT secrets
+API keys
+private credentials
 ```
 
 ---
 
-## 🐛 Troubleshooting
+# 🔒 CORS
 
-### Backend won't start
+Production frontend origin:
 
-**Issue:** Database connection error
-```bash
-# Check PostgreSQL is running
-sudo service postgresql status
-
-# Start PostgreSQL
-sudo service postgresql start
-
-# Verify database exists
-psql -l | grep stocksense
-
-# If missing, create it
-createdb stocksense
-psql -d stocksense -f backend/sql/schema.sql
+```text
+https://stock-sense-final.vercel.app
 ```
 
-### Frontend can't connect to backend
+Local development frontend:
 
-**Issue:** CORS or network error
-```bash
-# Check backend is running
-curl http://localhost:5001/health
-
-# Should return: {"status":"healthy"}
+```text
+http://localhost:3000
 ```
 
-**Fix:** Ensure backend CORS allows `http://localhost:3000`
+The backend is configured to allow the required frontend origins.
 
-### Port already in use
-```bash
-# Kill process on port 5001 (backend)
-lsof -ti:5001 | xargs kill -9
-
-# Kill process on port 3000 (frontend)
-lsof -ti:3000 | xargs kill -9
-```
-
-### npm install fails
-```bash
-# Clear npm cache
-npm cache clean --force
-
-# Delete node_modules
-rm -rf node_modules package-lock.json
-
-# Reinstall
-npm install
-```
+Production CORS should remain restricted to trusted application origins.
 
 ---
 
-## 📊 Database Schema
+# 🗄️ Database
 
-### Core Tables
+The database schema is located at:
 
-- **users** - User accounts and authentication
-- **components** - Component inventory
-- **pcbs** - PCB definitions
-- **pcb_component_mapping** - Bill of Materials
-- **production_entries** - Production records
-- **consumption_history** - Component usage tracking
-- **procurement_triggers** - Low stock alerts
+```text
+backend/sql/schema.sql
+```
 
-**Full schema:** [backend/sql/schema.sql](./backend/sql/schema.sql)
+The production PostgreSQL database uses Neon.
+
+Before modifying the production database:
+
+1. Review the existing schema.
+2. Check foreign-key relationships.
+3. Check existing constraints.
+4. Check dependencies in the backend.
+5. Prefer controlled migrations.
+6. Avoid deleting production tables without explicit planning.
 
 ---
 
-## 🔒 Security Features
+# 📈 Current Production Status
 
-- ✅ JWT-based authentication
-- ✅ Password hashing (bcrypt)
-- ✅ SQL injection prevention (parameterized queries)
-- ✅ CORS configuration
-- ✅ Input validation
-- ✅ Transaction safety
-
----
-
-## 🧪 Testing
-
-### Backend Tests
-```bash
-cd backend
-npm test
-```
-
-### Frontend Tests
-```bash
-cd frontend
-npm test
-```
+| Component | Status |
+|---|---|
+| React frontend | ✅ Deployed |
+| Vite production build | ✅ Working |
+| Vercel deployment | ✅ Working |
+| Node.js backend | ✅ Deployed |
+| Render deployment | ✅ Working |
+| PostgreSQL database | ✅ Configured |
+| Neon connection | ✅ Working |
+| JWT authentication | ✅ Working |
+| Production CORS | ✅ Configured |
+| Frontend → Backend API | ✅ Working |
+| Production login | ✅ Verified |
+| Excel integration | ✅ Implemented |
+| Inventory management | ✅ Implemented |
+| PCB/BOM management | ✅ Implemented |
+| Production tracking | ✅ Implemented |
+| Analytics | ✅ Implemented |
 
 ---
 
-## 🚀 Production Deployment
+# 🧪 Development & Testing
 
-### Backend Deployment
-```bash
-cd backend
-npm run build
-npm start
+Development should follow:
+
+```text
+Code Change
+     ↓
+Local Testing
+     ↓
+API Testing
+     ↓
+Database Verification
+     ↓
+Frontend Build
+     ↓
+Git Commit
+     ↓
+Git Push
+     ↓
+Vercel / Render Deployment
+     ↓
+Production Verification
 ```
 
-**Recommended platforms:**
-- Heroku
-- Railway
-- Render
-- AWS EC2
-
-### Frontend Deployment
-```bash
-cd frontend
-npm run build
-```
-
-Output: `dist/` folder
-
-**Recommended platforms:**
-- Vercel (Recommended)
-- Netlify
-- AWS S3 + CloudFront
-- GitHub Pages
-
-**⚠️ Important:** Set environment variables in production!
+Major changes should not be deployed without testing the affected functionality locally.
 
 ---
 
-## 📖 Pages Overview
+# 🛣️ Development Roadmap
 
-### 1. Login Page
-- JWT authentication
-- Secure login form
-- Token storage
+The production deployment is now the baseline for continued development.
 
-### 2. Dashboard
-- Total components count
-- Total PCBs count
-- Low stock alerts
-- Recent production entries
-- Quick action cards
+## Phase 1 — Technical Audit
 
-### 3. Components Page
-- List all components with search
-- Create/Edit/Delete components
-- Low stock highlighting
-- Status badges
+- Complete frontend component/page mapping
+- Complete backend route mapping
+- Complete controller mapping
+- Complete middleware mapping
+- Complete database schema mapping
+- Review API request/response contracts
+- Identify duplicate code
+- Identify unused code
+- Identify technical debt
+- Review project dependencies
 
-### 4. PCBs Page
-- Grid view of PCBs
-- Create PCB with BOM
-- Add/Remove components
-- View component mappings
+---
 
-### 5. Production Page
-- Two production modes
-- Real-time validation
-- Stock deduction preview
-- Success/error feedback
+## Phase 2 — Reliability
 
-### 6. Analytics Page
-- Top consumed components (Bar chart)
-- Consumption distribution (Pie chart)
-- Low stock table
+Improve:
+
+- API error handling
+- Frontend validation
+- Loading states
+- Empty states
+- Error messages
+- Database error handling
+- Excel validation
+- Duplicate handling
+- Transaction handling
+- Edge-case handling
+
+---
+
+## Phase 3 — Security
+
+Potential improvements:
+
+- Role-based authorization
+- Stronger access controls
+- Rate limiting
+- Input validation
+- File upload validation
+- File size restrictions
+- Security headers
+- Audit logging
+- Improved authentication handling
+- Production secret management
+
+---
+
+## Phase 4 — UI/UX
+
+Potential improvements:
+
+- Modern dashboard
+- Better navigation
+- Improved data tables
+- Search
+- Filtering
+- Pagination
+- Better forms
+- Better validation feedback
+- Loading indicators
+- Empty states
+- Confirmation dialogs
+- Toast notifications
+- Responsive design
+
+---
+
+## Phase 5 — Inventory Intelligence
+
+Potential improvements:
+
+- Low-stock detection
+- Reorder indicators
+- Component consumption history
+- Stock movement tracking
+- Supplier management
+- Inventory trends
+- Component usage analytics
+- Stock forecasting
+
+---
+
+## Phase 6 — Production Intelligence
+
+Potential improvements:
+
+- Production status tracking
+- Planned vs completed production
+- Component shortage detection
+- Production history
 - Production efficiency
-- Date range filtering
-
-### 7. Excel Management Page
-- Import components (bulk)
-- Export inventory
-- Export consumption
-- Export low stock report
-
-### 8. Procurement Page
-- View pending triggers
-- View resolved triggers
-- Mark as resolved
-- Trigger statistics
+- Component consumption per PCB
+- Production trend analysis
 
 ---
 
-## 🤝 Contributing
+## Phase 7 — Advanced Analytics
 
-This is a hackathon project for educational purposes.
+Potential improvements:
 
-### Team Members
-
-Vihaan Gandhi
-Vaibhavi Singh
-Shreya Kaulgud
-
-**Team Vibe Coders**
-- INVICTUS Hackathon 2025
-- ISTE VESIT Organization
-
----
-
-## 📄 License
-
-MIT License
+- Inventory KPIs
+- Production KPIs
+- Stock trend dashboards
+- Component consumption analytics
+- Shortage analysis
+- Production performance
+- Exportable reports
+- Advanced filtering
+- Historical comparisons
 
 ---
 
-## 🏆 Project Status
+## Phase 8 — Advanced Features
 
-✅ **Backend:** Production-ready (39 API endpoints)  
-✅ **Frontend:** Production-ready (8 pages)  
-✅ **Integration:** Fully tested  
-✅ **Documentation:** Complete  
-✅ **Security:** Implemented  
-✅ **Deployment:** Ready  
+Potential future additions:
 
----
+- Role-based permissions
+- Audit logs
+- Barcode/QR integration
+- Notifications
+- Supplier management
+- Intelligent reorder recommendations
+- Predictive analytics
+- Automated alerts
 
-## 📞 Support - vighman030507@gmail.com
-
-For issues or questions:
-- Check troubleshooting section above
-- Review browser console (F12) for frontend errors
-- Check backend logs for API errors
-- Verify environment variables are set correctly
+Advanced AI/ML functionality should only be added after the underlying inventory and production data are reliable and sufficiently structured.
 
 ---
 
-## 🎯 Achievements
+# 🧠 Development Philosophy
 
-- ✅ Complete full-stack application
-- ✅ Transaction-safe inventory management
-- ✅ Multi-mode production entry
-- ✅ Real-time analytics dashboard
-- ✅ Excel integration
-- ✅ Procurement automation
-- ✅ Comprehensive documentation
-- ✅ Production-ready deployment
+StockSense is being developed incrementally.
+
+The current production deployment provides the foundation:
+
+```text
+Working Production System
+          ↓
+Technical Audit
+          ↓
+Reliability Improvements
+          ↓
+Security Improvements
+          ↓
+UI/UX Improvements
+          ↓
+Inventory Intelligence
+          ↓
+Production Intelligence
+          ↓
+Advanced Analytics
+```
+
+The goal is to evolve StockSense from a functional project into a polished, reliable PCB inventory and production management platform.
 
 ---
-**Built with ❤️ for INVICTUS Hackathon 2026**
 
-*Team Vibe Coders - ISTE VESIT Organization*
+# 🤝 Contributing
+
+Before making major changes:
+
+1. Understand the existing architecture.
+2. Inspect the affected frontend code.
+3. Inspect the corresponding backend routes/controllers.
+4. Inspect database dependencies.
+5. Avoid breaking existing API contracts.
+6. Test locally.
+7. Build the frontend.
+8. Verify the affected production workflow after deployment.
+
+Do not rewrite working modules unnecessarily.
 
 ---
 
-**Last Updated:** February 2026
+# 📜 License
+
+Add the project's intended license here if/when one is selected.
+
+---
+
+# 👨‍💻 Project
+
+**StockSense — PCB Inventory Automation System**
+
+GitHub:  
+https://github.com/vighman030507-droid/StockSense_Final
+
+Live Application:  
+https://stock-sense-final.vercel.app/login
+
+Production API:  
+https://stocksense-final.onrender.com
