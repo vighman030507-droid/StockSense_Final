@@ -303,7 +303,7 @@ const exportConsumption = async (req, res) => {
  */
 const exportLowStock = async (req, res) => {
   try {
-    const thresholdPercent = parseFloat(process.env.PROCUREMENT_THRESHOLD_PERCENTAGE || 20) / 100;
+    const thresholdPercentage = parseFloat(process.env.PROCUREMENT_THRESHOLD_PERCENTAGE || 20);
 
     console.log('Exporting low stock report...');
 
@@ -315,7 +315,7 @@ const exportLowStock = async (req, res) => {
         c.current_stock_quantity AS "Current Stock",
         c.monthly_required_quantity AS "Monthly Required",
         ROUND((c.current_stock_quantity::NUMERIC / NULLIF(c.monthly_required_quantity, 0)) * 100, 2) AS "Stock %",
-        (c.monthly_required_quantity * 0.2) - c.current_stock_quantity AS "Shortage",
+        (c.monthly_required_quantity * ($1 / 100.0)) - c.current_stock_quantity AS "Shortage",
         COALESCE(recent.avg_daily_consumption, 0) AS "Avg Daily Usage",
         CASE 
           WHEN COALESCE(recent.avg_daily_consumption, 0) > 0 
@@ -325,8 +325,8 @@ const exportLowStock = async (req, res) => {
         recent.last_used AS "Last Used",
         CASE 
           WHEN c.current_stock_quantity <= 0 THEN 'CRITICAL - OUT OF STOCK'
-          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * 0.2 * 0.5) THEN 'URGENT'
-          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * 0.2) THEN 'REORDER NOW'
+          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * ($1 / 100.0) * 0.5) THEN 'URGENT'
+          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * ($1 / 100.0)) THEN 'REORDER NOW'
           ELSE 'WATCH'
         END AS "Priority"
       FROM components c
@@ -346,18 +346,18 @@ const exportLowStock = async (req, res) => {
         ) daily
         GROUP BY component_id
       ) recent ON c.id = recent.component_id
-      WHERE ROUND((c.current_stock_quantity::NUMERIC / NULLIF(c.monthly_required_quantity, 0)) * 100, 2) <= 20
+      WHERE ROUND((c.current_stock_quantity::NUMERIC / NULLIF(c.monthly_required_quantity, 0)) * 100, 2) <= $1
       ORDER BY 
         CASE 
           WHEN c.current_stock_quantity <= 0 THEN 1
-          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * 0.2 * 0.5) THEN 2
-          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * 0.2) THEN 3
+          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * ($1 / 100.0) * 0.5) THEN 2
+          WHEN c.current_stock_quantity <= (c.monthly_required_quantity * ($1 / 100.0)) THEN 3
           ELSE 4
         END,
         c.current_stock_quantity ASC
     `;
 
-    const result = await query(queryText);
+    const result = await query(queryText, [thresholdPercentage]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({

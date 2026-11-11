@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const { pool, closePool } = require('./config/database');
@@ -13,29 +15,87 @@ const excelRoutes = require('./routes/excelRoutes');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-/* ---------------- MIDDLEWARE ---------------- */
+/* ---------------- PROXY & SECURITY ---------------- */
 
-// Enable CORS (allow frontend on 3000)
+// Trust reverse proxy (e.g. Render, Vercel) for accurate client IP in rate limiting
+app.set('trust proxy', 1);
+
+// Security Headers with Helmet (configured for API compatibility)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+/* ---------------- RATE LIMITING ---------------- */
+
+// General API rate limiter
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again after 15 minutes.',
+  },
+});
+
+// Stricter rate limiter for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 login attempts per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many authentication attempts, please try again after 15 minutes.',
+  },
+});
+
+// Rate limiter for file uploads
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Upload limit reached, please try again later.',
+  },
+});
+
+app.use('/api', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/excel/import', uploadLimiter);
+
+/* ---------------- CORS CONFIGURATION ---------------- */
+
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://stock-sense-final.vercel.app'
+  'http://localhost:5173',
+  'https://stock-sense-final.vercel.app',
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+const vercelPreviewRegex = /^https:\/\/stock-sense-.*\.vercel\.app$/;
 
-// Parse JSON body
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
+
+/* ---------------- BODY PARSERS & LOGGING ---------------- */
+
 app.use(express.json());
-
-// Parse URL encoded
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging
@@ -44,10 +104,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
+/* ---------------- HEALTH CHECK ---------------- */
+
 app.get('/health', async (req, res) => {
   try {
-    // Test database connection
     const result = await pool.query('SELECT NOW()');
 
     res.json({
@@ -55,7 +115,7 @@ app.get('/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       database: 'connected',
       uptime: process.uptime(),
-      version: '1.0.0',
+      version: '1.2.0',
     });
   } catch (error) {
     res.status(503).json({
@@ -67,18 +127,21 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// API Routes
+/* ---------------- API ROUTES ---------------- */
+
 app.use('/api/auth', authRoutes);
 app.use('/api/components', componentRoutes);
 app.use('/api/pcbs', pcbRoutes);
 app.use('/api/production', productionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/excel', excelRoutes);
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'PCB Inventory Automation System API',
-    version: '1.0.0',
+    message: 'StockSense — PCB Inventory & Production Automation System API',
+    version: '1.2.0',
+    status: 'online',
     endpoints: {
       health: '/health',
       auth: '/api/auth',
@@ -86,11 +149,13 @@ app.get('/', (req, res) => {
       pcbs: '/api/pcbs',
       production: '/api/production',
       analytics: '/api/analytics',
-      excel: '/api/excel'
+      excel: '/api/excel',
     },
-    documentation: 'See README.md for API documentation',
+    documentation: 'See README.md for complete API documentation',
   });
 });
+
+/* ---------------- ERROR HANDLING ---------------- */
 
 // 404 handler
 app.use((req, res) => {
@@ -112,16 +177,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
+/* ---------------- SERVER START & SHUTDOWN ---------------- */
+
 const server = app.listen(PORT, () => {
   console.log('='.repeat(50));
-  console.log('PCB Inventory Automation System');
+  console.log('StockSense — PCB Inventory Automation System');
   console.log('='.repeat(50));
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📊 Database: ${process.env.DB_NAME || 'pcb_inventory'}`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}`);
-  console.log(`💚 Health Check: http://localhost:${PORT}/health`);
+  console.log(`🔗 Health Check: http://localhost:${PORT}/health`);
   console.log('='.repeat(50));
 });
 
@@ -134,7 +199,7 @@ const gracefulShutdown = async () => {
 
     try {
       await closePool();
-      console.log('✓ All connections closed');
+      console.log('✓ All database connections closed');
       process.exit(0);
     } catch (error) {
       console.error('✗ Error during shutdown:', error);
@@ -142,7 +207,6 @@ const gracefulShutdown = async () => {
     }
   });
 
-  // Force shutdown after 10 seconds
   setTimeout(() => {
     console.error('⚠️  Forced shutdown after timeout');
     process.exit(1);

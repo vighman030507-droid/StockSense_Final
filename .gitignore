@@ -8,4 +8,7 @@ uploads/
 .claude/
 skills-lock.json
 dist/
+neon.ts
+package.json
+package-lock.json
 

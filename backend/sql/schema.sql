@@ -59,7 +59,7 @@ CREATE TABLE pcb_component_mapping (
 -- Production Entries (PCB production records)
 CREATE TABLE production_entries (
     id SERIAL PRIMARY KEY,
-    pcb_id INTEGER NOT NULL REFERENCES pcbs(id) ON DELETE RESTRICT,
+    pcb_id INTEGER REFERENCES pcbs(id) ON DELETE RESTRICT,
     quantity_produced INTEGER NOT NULL CHECK (quantity_produced > 0),
     production_date DATE DEFAULT CURRENT_DATE,
     lot_number VARCHAR(100),
