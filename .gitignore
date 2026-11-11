@@ -2,3 +2,10 @@ node_modules/
 uploads/
 .env
 .DS_Store
+.neon
+.env.local
+.agents/
+.claude/
+skills-lock.json
+dist/
+

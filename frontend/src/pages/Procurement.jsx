@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import toast from 'react-hot-toast';
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Clock, Check, X, ShieldAlert, ArrowRight, FileCheck } from 'lucide-react';
 
 const Procurement = () => {
   const [triggers, setTriggers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending'); // 'pending' or 'resolved'
+  const [resolvingTrigger, setResolvingTrigger] = useState(null);
+  const [resolutionNotes, setResolutionNotes] = useState('');
+  const [submittingResolve, setSubmittingResolve] = useState(false);
 
   useEffect(() => {
     fetchTriggers();
@@ -18,7 +21,7 @@ const Procurement = () => {
       const response = await axiosInstance.get('/api/production/procurement/triggers', {
         params: { status: filter },
       });
-      setTriggers(response.data.data.procurement_triggers || []);
+      setTriggers(response.data.data?.procurement_triggers || []);
     } catch (error) {
       toast.error('Failed to fetch procurement triggers');
       console.error(error);
@@ -27,108 +30,140 @@ const Procurement = () => {
     }
   };
 
-  const handleResolve = async (triggerId) => {
-    const notes = prompt('Enter resolution notes (e.g., Purchase Order number):');
-    if (!notes) return;
+  const openResolveModal = (trigger) => {
+    setResolvingTrigger(trigger);
+    setResolutionNotes(`PO-${new Date().getFullYear()}-001: Order placed with vendor`);
+  };
+
+  const handleResolveSubmit = async (e) => {
+    e.preventDefault();
+    if (!resolvingTrigger) return;
 
     try {
-      await axiosInstance.put(`/api/production/procurement/triggers/${triggerId}/resolve`, {
-        notes,
+      setSubmittingResolve(true);
+      await axiosInstance.put(`/api/production/procurement/triggers/${resolvingTrigger.id}/resolve`, {
+        notes: resolutionNotes,
       });
-      toast.success('Trigger marked as resolved');
+      toast.success('Procurement trigger resolved');
+      setResolvingTrigger(null);
+      setResolutionNotes('');
       fetchTriggers();
     } catch (error) {
       toast.error('Failed to resolve trigger');
+    } finally {
+      setSubmittingResolve(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="spinner w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      <div className="flex flex-col items-center justify-center h-96 space-y-3">
+        <div className="spinner w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full"></div>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Loading procurement triggers...</p>
       </div>
     );
   }
 
-  const pendingCount = triggers.filter(t => t.status === 'pending').length;
-  const resolvedCount = triggers.filter(t => t.status === 'resolved').length;
+  const pendingCount = filter === 'pending' ? triggers.length : 0;
+  const resolvedCount = filter === 'resolved' ? triggers.length : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Procurement Triggers</h1>
-        <p className="text-gray-600 mt-1">Manage low stock alerts and procurement orders</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          Procurement Triggers
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Automated reorder triggers dispatched when stock crosses below the critical 20% monthly requirement threshold
+        </p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="card bg-red-50 border-2 border-red-200">
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="card p-5 border-l-4 border-l-rose-500 bg-rose-50/40 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <div className="flex items-center space-x-4">
-            <div className="p-4 bg-red-500 rounded-full">
-              <AlertTriangle className="w-8 h-8 text-white" />
+            <div className="p-3.5 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-500/20">
+              <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Pending Triggers</p>
-              <p className="text-3xl font-bold text-gray-900">{pendingCount}</p>
-              <p className="text-xs text-gray-500 mt-1">Require attention</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                Action Required
+              </p>
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                {filter === 'pending' ? triggers.length : 'Review Pending Tab'}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Critical shortages needing purchase orders
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="card bg-green-50 border-2 border-green-200">
+        <div className="card p-5 border-l-4 border-l-emerald-500 bg-emerald-50/40 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <div className="flex items-center space-x-4">
-            <div className="p-4 bg-green-500 rounded-full">
-              <CheckCircle className="w-8 h-8 text-white" />
+            <div className="p-3.5 bg-emerald-500 text-white rounded-xl shadow-md shadow-emerald-500/20">
+              <CheckCircle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Resolved Triggers</p>
-              <p className="text-3xl font-bold text-gray-900">{resolvedCount}</p>
-              <p className="text-xs text-gray-500 mt-1">Successfully handled</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                Resolved Orders
+              </p>
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                {filter === 'resolved' ? triggers.length : 'Review History Tab'}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Purchase orders processed and documented
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="card">
-        <div className="flex space-x-4 border-b border-gray-200 pb-4">
+      {/* Filter Tabs and Data Table */}
+      <div className="card p-0 overflow-hidden">
+        {/* Tab Header */}
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center space-x-3">
           <button
             onClick={() => setFilter('pending')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
               filter === 'pending'
-                ? 'bg-red-100 text-red-700'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-rose-600 text-white shadow-sm shadow-rose-500/20'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Pending ({pendingCount})
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Pending Alerts</span>
           </button>
           <button
             onClick={() => setFilter('resolved')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
               filter === 'resolved'
-                ? 'bg-green-100 text-green-700'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Resolved ({resolvedCount})
+            <CheckCircle className="w-3.5 h-3.5" />
+            <span>Resolved History</span>
           </button>
         </div>
 
-        {/* Triggers Table */}
-        <div className="mt-4 overflow-x-auto">
+        {/* Table Content */}
+        <div className="overflow-x-auto">
           {triggers.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-16">
               {filter === 'pending' ? (
                 <div>
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <p className="text-gray-500">No pending procurement triggers!</p>
-                  <p className="text-sm text-gray-400 mt-1">All components are adequately stocked</p>
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Zero Pending Procurement Triggers</h4>
+                  <p className="text-xs text-slate-500 mt-1">All electronic components have stock above their 20% safety threshold.</p>
                 </div>
               ) : (
                 <div>
-                  <XCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No resolved triggers yet</p>
+                  <Clock className="w-10 h-10 text-slate-400 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-medium text-slate-500">No resolved triggers recorded</p>
                 </div>
               )}
             </div>
@@ -136,63 +171,79 @@ const Procurement = () => {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Triggered At</th>
-                  <th>Component</th>
+                  <th>Timestamp</th>
                   <th>Part Number</th>
+                  <th>Component Name</th>
                   <th>Current Stock</th>
-                  <th>Monthly Req.</th>
-                  <th>Threshold</th>
+                  <th>Monthly Requirement</th>
                   <th>Status</th>
-                  {filter === 'pending' && <th>Actions</th>}
-                  {filter === 'resolved' && <th>Resolved At</th>}
+                  {filter === 'resolved' && <th>Resolution Notes</th>}
+                  <th className="text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {triggers.map((trigger) => {
-                  const stockPercent = (trigger.current_stock / trigger.monthly_requirement) * 100;
-                  
+                  const stock = trigger.current_stock;
+                  const req = trigger.monthly_requirement;
+                  const pct = Math.round((stock / (req || 1)) * 100);
+
                   return (
-                    <tr key={trigger.id} className={filter === 'pending' ? 'bg-red-50' : 'bg-green-50'}>
-                      <td className="text-sm text-gray-600">
-                        {new Date(trigger.triggered_at).toLocaleString()}
+                    <tr key={trigger.id} className={filter === 'pending' ? 'bg-rose-500/5 dark:bg-rose-950/20' : ''}>
+                      <td className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                        {new Date(trigger.triggered_at).toLocaleString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </td>
-                      <td className="font-medium">{trigger.component_name}</td>
-                      <td className="font-mono">{trigger.part_number}</td>
-                      <td className="font-bold text-red-600">{trigger.current_stock}</td>
-                      <td>{trigger.monthly_requirement}</td>
+                      <td className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
+                        {trigger.part_number}
+                      </td>
+                      <td className="font-semibold text-slate-900 dark:text-white">
+                        {trigger.component_name}
+                      </td>
                       <td>
-                        <span className="badge badge-warning">
-                          {trigger.threshold_percentage}%
-                        </span>
+                        <span className="font-extrabold text-sm text-rose-600 dark:text-rose-400">
+                          {stock}
+                        </span>{' '}
+                        <span className="text-xs text-slate-400 font-mono">({pct}%)</span>
+                      </td>
+                      <td className="text-slate-600 dark:text-slate-300 font-medium">
+                        {req} {trigger.unit_of_measure || 'pcs'}
                       </td>
                       <td>
                         {trigger.status === 'pending' ? (
-                          <span className="badge badge-danger flex items-center w-fit">
+                          <span className="badge badge-danger">
                             <AlertTriangle className="w-3 h-3 mr-1" />
-                            Pending
+                            Pending PO
                           </span>
                         ) : (
-                          <span className="badge badge-success flex items-center w-fit">
-                            <CheckCircle className="w-3 h-3 mr-1" />
+                          <span className="badge badge-success">
+                            <Check className="w-3 h-3 mr-1" />
                             Resolved
                           </span>
                         )}
                       </td>
-                      {filter === 'pending' && (
-                        <td>
+                      {filter === 'resolved' && (
+                        <td className="text-xs text-slate-600 dark:text-slate-400 max-w-xs truncate">
+                          {trigger.notes || 'Resolved without PO notes'}
+                        </td>
+                      )}
+                      <td className="text-right">
+                        {trigger.status === 'pending' ? (
                           <button
-                            onClick={() => handleResolve(trigger.id)}
-                            className="btn btn-success btn-sm"
+                            onClick={() => openResolveModal(trigger)}
+                            className="btn btn-success text-xs py-1.5 px-3"
                           >
-                            Mark Resolved
+                            Mark PO Placed
                           </button>
-                        </td>
-                      )}
-                      {filter === 'resolved' && trigger.resolved_at && (
-                        <td className="text-sm text-gray-600">
-                          {new Date(trigger.resolved_at).toLocaleString()}
-                        </td>
-                      )}
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-mono">
+                            {trigger.resolved_at ? new Date(trigger.resolved_at).toLocaleDateString() : 'Done'}
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -202,24 +253,57 @@ const Procurement = () => {
         </div>
       </div>
 
-      {/* Info Box */}
-      <div className="card bg-blue-50 border-2 border-blue-200">
-        <h3 className="font-bold text-gray-900 mb-3">About Procurement Triggers</h3>
-        <div className="space-y-2 text-sm text-gray-700">
-          <p>
-            • Triggers are <strong>automatically generated</strong> when component stock falls below 20% of monthly requirement
-          </p>
-          <p>
-            • Each component can only have <strong>one pending trigger</strong> at a time
-          </p>
-          <p>
-            • Mark triggers as resolved after placing purchase orders
-          </p>
-          <p>
-            • New triggers will be generated if stock continues to decrease
-          </p>
+      {/* Modern Trigger Resolution Modal (Replaces crude window.prompt) */}
+      {resolvingTrigger && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full shadow-2xl p-6">
+            <div className="flex items-center space-x-3 text-emerald-600 dark:text-emerald-400 mb-3">
+              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl">
+                <FileCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                  Resolve Procurement Alert
+                </h3>
+                <p className="text-xs text-slate-400 font-mono">
+                  {resolvingTrigger.part_number} &bull; {resolvingTrigger.component_name}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleResolveSubmit} className="space-y-4 mt-4">
+              <div>
+                <label className="form-label">Purchase Order (PO) / Resolution Notes *</label>
+                <textarea
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  className="form-input text-xs"
+                  rows="3"
+                  placeholder="e.g. PO-2026-9481 placed with Mouser / DigiKey. Expected delivery in 3 days."
+                  required
+                ></textarea>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setResolvingTrigger(null)}
+                  className="btn btn-secondary text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingResolve}
+                  className="btn btn-success text-xs font-semibold"
+                >
+                  {submittingResolve ? 'Saving...' : 'Confirm Resolution'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

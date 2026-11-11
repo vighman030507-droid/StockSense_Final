@@ -1,8 +1,21 @@
 import { useState, useEffect } from 'react';
 import axiosInstance from '../api/axiosInstance';
+import { useTheme } from '../context/ThemeContext';
 import toast from 'react-hot-toast';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, AlertTriangle, Package } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { TrendingUp, AlertTriangle, Package, Activity, Calendar, Filter } from 'lucide-react';
 
 const Analytics = () => {
   const [topConsumed, setTopConsumed] = useState([]);
@@ -14,7 +27,9 @@ const Analytics = () => {
     endDate: '',
   });
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+  const { isDark } = useTheme();
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
   useEffect(() => {
     fetchAnalytics();
@@ -36,10 +51,6 @@ const Analytics = () => {
         axiosInstance.get('/api/analytics/production-efficiency', { params }),
       ]);
 
-      console.log('Low Stock API Response:', lowStockRes.data);
-      console.log('Low Stock Data:', lowStockRes.data.data);
-      console.log('Low Stock Count:', lowStockRes.data.data?.length);
-
       setTopConsumed(topConsumedRes.data.data || []);
       setLowStock(lowStockRes.data.data || []);
       setEfficiencyData(efficiencyRes.data.data || []);
@@ -55,242 +66,265 @@ const Analytics = () => {
     fetchAnalytics();
   };
 
+  const clearFilter = () => {
+    setDateRange({ startDate: '', endDate: '' });
+    setTimeout(fetchAnalytics, 50);
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="spinner w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      <div className="flex flex-col items-center justify-center h-96 space-y-3">
+        <div className="spinner w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full"></div>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Computing analytics metrics...</p>
       </div>
     );
   }
 
+  // Theme-aware colors for Recharts
+  const gridColor = isDark ? '#334155' : '#e2e8f0';
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-        <p className="text-gray-600 mt-1">Component consumption and production insights</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          Telemetry & Consumption Analytics
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Historical Bill of Materials usage, component demand distribution, and production batch efficiency
+        </p>
       </div>
 
-      {/* Date Filter */}
-      <div className="card">
-        <h3 className="font-bold text-gray-900 mb-4">Date Range Filter</h3>
-        <div className="flex items-end space-x-4">
-          <div className="flex-1">
+      {/* Date Filter Card */}
+      <div className="card p-5">
+        <div className="flex items-center space-x-2.5 mb-3 text-slate-900 dark:text-white font-bold text-sm">
+          <Calendar className="w-4 h-4 text-blue-500" />
+          <span>Timeline Filter</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-end gap-3.5">
+          <div className="flex-1 w-full">
             <label className="form-label">Start Date</label>
             <input
               type="date"
               value={dateRange.startDate}
               onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-              className="form-input"
+              className="form-input text-xs"
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <label className="form-label">End Date</label>
             <input
               type="date"
               value={dateRange.endDate}
               onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-              className="form-input"
+              className="form-input text-xs"
             />
           </div>
-          <button onClick={handleDateFilter} className="btn btn-primary">
-            Apply Filter
-          </button>
-          <button
-            onClick={() => {
-              setDateRange({ startDate: '', endDate: '' });
-              setTimeout(fetchAnalytics, 100);
-            }}
-            className="btn btn-secondary"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card bg-blue-50 border-2 border-blue-200">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-blue-500 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Components Tracked</p>
-              <p className="text-2xl font-bold text-gray-900">{topConsumed.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-red-50 border-2 border-red-200">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-red-500 rounded-lg">
-              <AlertTriangle className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Low Stock Items</p>
-              <p className="text-2xl font-bold text-gray-900">{lowStock.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-green-50 border-2 border-green-200">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-green-500 rounded-lg">
-              <Package className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Production Runs</p>
-              <p className="text-2xl font-bold text-gray-900">{efficiencyData.length}</p>
-            </div>
+          <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto">
+            <button onClick={handleDateFilter} className="btn btn-primary text-xs flex-1 sm:flex-none">
+              <Filter className="w-3.5 h-3.5 mr-1.5" />
+              <span>Apply Range</span>
+            </button>
+            <button onClick={clearFilter} className="btn btn-secondary text-xs flex-1 sm:flex-none">
+              Reset
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Top Consumed Components Chart */}
-      <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Top 10 Consumed Components</h2>
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="card p-5 bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-3 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/20">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Top Consumed Parts
+              </p>
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                {topConsumed.length}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-5 bg-gradient-to-br from-rose-500/10 to-transparent border-rose-500/20">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-3 bg-rose-600 text-white rounded-xl shadow-md shadow-rose-500/20">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Low Stock Threshold
+              </p>
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                {lowStock.length}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-5 bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-3 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-500/20">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Efficiency Periods
+              </p>
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                {efficiencyData.length}
+              </h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Consumed Components Bar Chart Card */}
+      <div className="card p-6">
+        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-blue-500" />
+          <span>Top 10 Consumed Electronic Components</span>
+        </h2>
 
         {topConsumed.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No consumption data available</p>
+          <div className="text-center py-14 text-slate-400 text-xs">
+            No consumption records found for the selected timeframe.
+          </div>
         ) : (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={topConsumed}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="component_code"
-                angle={-45}
-                textAnchor="end"
-                height={100}
-              />
-              <YAxis />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-                        <p className="font-bold">{data.component_name}</p>
-                        <p className="text-sm text-gray-600">Code: {data.component_code}</p>
-                        <p className="text-sm">Total Consumed: <strong>{data.total_consumed}</strong></p>
-                        <p className="text-sm">Current Stock: {data.current_stock}</p>
-                        <p className="text-sm">Avg per Use: {data.avg_per_consumption}</p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Legend />
-              <Bar dataKey="total_consumed" fill="#3b82f6" name="Total Consumed" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-80 sm:h-96 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topConsumed} margin={{ top: 10, right: 10, left: -10, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                <XAxis
+                  dataKey="component_code"
+                  stroke={textColor}
+                  fontSize={11}
+                  angle={-30}
+                  textAnchor="end"
+                  tickLine={false}
+                />
+                <YAxis stroke={textColor} fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-slate-900 text-white border border-slate-700 p-3 rounded-xl shadow-xl text-xs space-y-1">
+                          <p className="font-bold text-blue-400">{d.component_name}</p>
+                          <p className="font-mono text-slate-300">SKU: {d.component_code}</p>
+                          <p>
+                            Total Consumed: <strong className="text-emerald-400">{d.total_consumed} units</strong>
+                          </p>
+                          <p className="text-slate-400">Current Stock: {d.current_stock}</p>
+                          <p className="text-slate-400">Avg / Production: {d.avg_per_consumption}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="total_consumed" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Units Consumed" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
 
-      {/* Low Stock Components Table */}
-      <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Low Stock Components</h2>
+      {/* Production Efficiency & Distribution Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Production Efficiency Table */}
+        <div className="card p-6">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-emerald-500" />
+            <span>Production Runs Efficiency</span>
+          </h2>
 
-        {lowStock.length === 0 ? (
-          <div className="text-center py-8">
-            <AlertTriangle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-            <p className="text-gray-500">All components are adequately stocked!</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Part Number</th>
-                  <th>Component Name</th>
-                  <th>Current Stock</th>
-                  <th>Monthly Required</th>
-                  <th>Stock %</th>
-                  <th>Shortage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowStock.map((item) => (
-                  <tr key={item.component_id} className="bg-red-50">
-                    <td className="font-mono font-bold">{item.component_code}</td>
-                    <td>{item.component_name}</td>
-                    <td className="text-red-600 font-bold">{item.current_stock}</td>
-                    <td>{item.monthly_required_quantity}</td>
-                    <td>
-                      <span className="badge badge-danger">
-                        {item.stock_percentage ? item.stock_percentage : 0}%
-                      </span>
-                    </td>
-                    <td className="text-red-600 font-bold">
-                      {item.shortage_quantity > 0 ? item.shortage_quantity : 0}
-                    </td>
+          {efficiencyData.length === 0 ? (
+            <p className="text-xs text-slate-400 py-10 text-center">No production batch data available</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Runs</th>
+                    <th>PCB Models</th>
+                    <th>Total Units</th>
+                    <th>Avg / Run</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Production Efficiency */}
-      <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Production Efficiency</h2>
-
-        {efficiencyData.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No production data available</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Period</th>
-                  <th>Production Runs</th>
-                  <th>Unique PCB Types</th>
-                  <th>Total Produced</th>
-                  <th>Avg per Run</th>
-                </tr>
-              </thead>
-              <tbody>
-                {efficiencyData.map((item, index) => (
-                  <tr key={index}>
-                    <td className="font-mono">{item.period}</td>
-                    <td>{item.production_runs}</td>
-                    <td>{item.unique_pcb_types}</td>
-                    <td className="font-bold">{item.total_produced}</td>
-                    <td>{item.avg_produced_per_run}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Component Distribution Pie Chart */}
-      {topConsumed.length > 0 && (
-        <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Consumption Distribution (Top 6)</h2>
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={topConsumed.slice(0, 6)}
-                dataKey="total_consumed"
-                nameKey="component_code"
-                cx="50%"
-                cy="50%"
-                outerRadius={120}
-                label={(entry) => `${entry.component_code}: ${entry.total_consumed}`}
-              >
-                {topConsumed.slice(0, 6).map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+                </thead>
+                <tbody>
+                  {efficiencyData.map((item, index) => (
+                    <tr key={index}>
+                      <td className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">{item.period}</td>
+                      <td>{item.production_runs}</td>
+                      <td>{item.unique_pcb_types}</td>
+                      <td className="font-bold text-slate-900 dark:text-white">{item.total_produced}</td>
+                      <td className="text-slate-500 font-mono text-xs">{item.avg_produced_per_run}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Component Distribution Pie Chart */}
+        <div className="card p-6">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Package className="w-4 h-4 text-purple-500" />
+            <span>Top Component Consumption Share</span>
+          </h2>
+
+          {topConsumed.length === 0 ? (
+            <p className="text-xs text-slate-400 py-10 text-center">No distribution data available</p>
+          ) : (
+            <div className="h-64 sm:h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={topConsumed.slice(0, 6)}
+                    dataKey="total_consumed"
+                    nameKey="component_code"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={85}
+                    innerRadius={45}
+                    paddingAngle={3}
+                  >
+                    {topConsumed.slice(0, 6).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const d = payload[0].payload;
+                        return (
+                          <div className="bg-slate-900 text-white border border-slate-700 p-2.5 rounded-xl shadow-xl text-xs">
+                            <span className="font-bold text-blue-400">{d.component_code}</span>: {d.total_consumed} units
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Legend
+                    formatter={(value) => (
+                      <span className="text-xs text-slate-600 dark:text-slate-300 font-mono">{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

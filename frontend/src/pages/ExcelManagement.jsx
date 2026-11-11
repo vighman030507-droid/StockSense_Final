@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import toast from 'react-hot-toast';
-import { Download, Upload, FileSpreadsheet, CheckCircle, XCircle } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, CheckCircle, XCircle, FileText, ArrowDownToLine, Layers, AlertTriangle } from 'lucide-react';
 
 const ExcelManagement = () => {
   const [importing, setImporting] = useState(false);
@@ -9,13 +9,12 @@ const ExcelManagement = () => {
 
   const handleExport = async (endpoint, filename) => {
     try {
-      toast.loading('Generating export...', { id: 'export' });
-      
+      toast.loading('Preparing workbook export...', { id: 'export' });
+
       const response = await axiosInstance.get(endpoint, {
         responseType: 'blob',
       });
 
-      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -25,10 +24,10 @@ const ExcelManagement = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      toast.success('Export downloaded successfully!', { id: 'export' });
+      toast.success('Spreadsheet exported successfully!', { id: 'export' });
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Export failed', { id: 'export' });
+      toast.error('Export generation failed', { id: 'export' });
     }
   };
 
@@ -51,11 +50,11 @@ const ExcelManagement = () => {
       });
 
       setImportResult(response.data);
-      
+
       if (response.data.success) {
-        toast.success('Import completed successfully!');
+        toast.success('Batch import completed!');
       } else {
-        toast.error('Import completed with errors');
+        toast.error('Import processed with errors');
       }
     } catch (error) {
       console.error('Import error:', error);
@@ -63,150 +62,137 @@ const ExcelManagement = () => {
       setImportResult({
         success: false,
         message: errorData?.message || 'Import failed',
-        error: errorData?.error || 'An error occurred',
+        error: errorData?.error || 'Spreadsheet processing encountered an error',
       });
       toast.error('Import failed');
     } finally {
       setImporting(false);
-      e.target.value = ''; // Reset file input
+      e.target.value = '';
     }
   };
 
   const downloadTemplate = async () => {
-    await handleExport('/api/excel/import/template', 'component_import_template.xlsx');
+    await handleExport('/api/excel/import/template', 'stocksense_component_template.xlsx');
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-7 animate-fadeIn">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Excel Management</h1>
-        <p className="text-gray-600 mt-1">Import and export data in Excel format</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          Excel Data Exchange
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Automated batch component import with header mapping, inventory exports, and consumption auditing
+        </p>
       </div>
 
       {/* Import Section */}
-      <div className="card bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200">
-        <div className="flex items-start space-x-4">
-          <div className="p-4 bg-blue-500 rounded-full">
-            <Upload className="w-8 h-8 text-white" />
+      <div className="card p-6 sm:p-7 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 border-blue-200 dark:border-blue-900/40">
+        <div className="flex flex-col md:flex-row md:items-start gap-6">
+          <div className="p-4 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg shadow-blue-500/20 shrink-0">
+            <Upload className="w-8 h-8" />
           </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Import Components</h2>
-            <p className="text-gray-700 mb-4">
-              Upload an Excel file to bulk import or update components in the system
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+              Bulk Import Electronic Components
+            </h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-5 leading-relaxed">
+              Upload an Excel (.xlsx or .xls) spreadsheet to bulk-insert or upsert parts. Column headers like{' '}
+              <code className="text-blue-600 dark:text-blue-400 font-mono">Part Number</code>,{' '}
+              <code className="text-blue-600 dark:text-blue-400 font-mono">Component Name</code>, and{' '}
+              <code className="text-blue-600 dark:text-blue-400 font-mono">Monthly Required</code> are automatically detected.
             </p>
 
-            <div className="space-y-4">
-              {/* Download Template Button */}
-              <button
-                onClick={downloadTemplate}
-                className="btn btn-secondary flex items-center space-x-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download Template</span>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Template Download Button */}
+              <button onClick={downloadTemplate} className="btn btn-secondary text-xs">
+                <Download className="w-4 h-4 mr-1.5" />
+                <span>Download Sample Template</span>
               </button>
 
-              {/* File Upload */}
-              <div>
-                <label className="block">
-                  <div className="btn btn-primary flex items-center justify-center space-x-2 cursor-pointer">
-                    {importing ? (
-                      <>
-                        <div className="spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
-                        <span>Importing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-5 h-5" />
-                        <span>Select Excel File to Import</span>
-                      </>
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={handleImport}
-                    disabled={importing}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              {/* Import Instructions */}
-              <div className="bg-white rounded-lg p-4">
-                <h4 className="font-bold text-gray-900 mb-2">Import Instructions:</h4>
-                <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700">
-                  <li>Download the template file</li>
-                  <li>Fill in component data (Part Number, Component Name, etc.)</li>
-                  <li>Upload the completed file</li>
-                  <li>System will automatically create or update components</li>
-                </ol>
-              </div>
+              {/* Upload Action */}
+              <label className="btn btn-primary text-xs cursor-pointer">
+                {importing ? (
+                  <>
+                    <div className="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    <span>Parsing & Importing Spreadsheet...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-1.5" />
+                    <span>Select Spreadsheet (.xlsx, .xls)</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImport}
+                  disabled={importing}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Import Result */}
+      {/* Import Result Notification Box */}
       {importResult && (
-        <div className={`card ${importResult.success ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
-          <div className="flex items-start space-x-3">
+        <div
+          className={`card p-6 border-2 animate-fadeIn ${
+            importResult.success
+              ? 'border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20'
+              : 'border-rose-500/40 bg-rose-50/40 dark:bg-rose-950/20'
+          }`}
+        >
+          <div className="flex items-start space-x-3.5">
             {importResult.success ? (
-              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+              <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             ) : (
-              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+              <XCircle className="w-6 h-6 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
             )}
-            
-            <div className="flex-1">
-              <h3 className={`font-bold text-lg ${importResult.success ? 'text-green-900' : 'text-red-900'}`}>
-                {importResult.message || (importResult.success ? 'Import Successful' : 'Import Failed')}
+
+            <div className="flex-1 min-w-0">
+              <h3 className={`font-bold text-base ${importResult.success ? 'text-emerald-900 dark:text-emerald-200' : 'text-rose-900 dark:text-rose-200'}`}>
+                {importResult.message || (importResult.success ? 'Import Completed' : 'Import Unsuccessful')}
               </h3>
 
               {importResult.summary && (
-                <div className="mt-3 bg-white rounded-lg p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="mt-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{importResult.summary.total_rows}</p>
-                      <p className="text-sm text-gray-600">Total Rows</p>
+                      <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{importResult.summary.total_rows}</p>
+                      <p className="text-xs text-slate-400">Total Rows</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-green-600">{importResult.summary.inserted}</p>
-                      <p className="text-sm text-gray-600">Inserted</p>
+                      <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{importResult.summary.inserted}</p>
+                      <p className="text-xs text-slate-400">Inserted</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-blue-600">{importResult.summary.updated}</p>
-                      <p className="text-sm text-gray-600">Updated</p>
+                      <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">{importResult.summary.updated}</p>
+                      <p className="text-xs text-slate-400">Updated</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-red-600">{importResult.summary.skipped}</p>
-                      <p className="text-sm text-gray-600">Skipped</p>
+                      <p className="text-2xl font-extrabold text-rose-600 dark:text-rose-400">{importResult.summary.skipped}</p>
+                      <p className="text-xs text-slate-400">Skipped</p>
                     </div>
                   </div>
-                  <p className="text-center mt-3 text-sm font-bold text-gray-700">
+                  <div className="text-center mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Success Rate: {importResult.summary.success_rate}
-                  </p>
+                  </div>
                 </div>
               )}
 
               {importResult.errors && importResult.errors.length > 0 && (
-                <div className="mt-3 bg-white rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-2">Errors ({importResult.errors.length}):</h4>
-                  <div className="max-h-60 overflow-y-auto space-y-2">
-                    {importResult.errors.slice(0, 10).map((error, index) => (
-                      <div key={index} className="text-sm border-b border-gray-100 pb-2">
-                        <p className="text-red-600">
-                          <strong>Row {error.row}:</strong> {error.error}
-                        </p>
-                        {error.message && (
-                          <p className="text-gray-600">{error.message}</p>
-                        )}
+                <div className="mt-3 p-4 rounded-xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 text-xs">
+                  <h4 className="font-bold text-rose-700 dark:text-rose-400 mb-2">Errors ({importResult.errors.length}):</h4>
+                  <div className="max-h-48 overflow-y-auto space-y-1.5">
+                    {importResult.errors.map((err, index) => (
+                      <div key={index} className="py-1 border-b border-slate-100 dark:border-slate-800 font-mono text-[11px]">
+                        <span className="font-bold text-rose-600">Row {err.row}:</span> {err.error} {err.message ? `— ${err.message}` : ''}
                       </div>
                     ))}
-                    {importResult.errors.length > 10 && (
-                      <p className="text-sm text-gray-500 italic">
-                        ...and {importResult.errors.length - 10} more errors
-                      </p>
-                    )}
                   </div>
                 </div>
               )}
@@ -216,102 +202,96 @@ const ExcelManagement = () => {
       )}
 
       {/* Export Section */}
-      <div className="card">
-        <div className="flex items-start space-x-4 mb-6">
-          <div className="p-4 bg-green-500 rounded-full">
-            <Download className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Export Data</h2>
-            <p className="text-gray-700">
-              Export inventory, consumption history, and reports to Excel format
-            </p>
-          </div>
+      <div className="card p-6">
+        <div className="mb-5">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            Export Production & Inventory Datasets
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Download formatted Excel workbooks with calculated metrics, stock percentages, and lot audit trails
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Export Inventory */}
-          <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-            <FileSpreadsheet className="w-10 h-10 text-blue-600 mb-3" />
-            <h3 className="font-bold text-gray-900 mb-2">Inventory Report</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Complete component inventory with stock levels and status
-            </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Inventory Report Card */}
+          <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500/60 transition-all flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1">
+                Complete Inventory List
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                Full snapshot of all components, stock counts, units of measure, and stock statuses.
+              </p>
+            </div>
             <button
-              onClick={() => handleExport('/api/excel/export/inventory', `inventory_${new Date().toISOString().split('T')[0]}.xlsx`)}
-              className="btn btn-primary w-full flex items-center justify-center space-x-2"
+              onClick={() =>
+                handleExport(
+                  '/api/excel/export/inventory',
+                  `stocksense_inventory_${new Date().toISOString().split('T')[0]}.xlsx`
+                )
+              }
+              className="btn btn-primary w-full text-xs font-semibold"
             >
-              <Download className="w-4 h-4" />
-              <span>Export Inventory</span>
+              <Download className="w-4 h-4 mr-1.5" />
+              <span>Export Inventory (.xlsx)</span>
             </button>
           </div>
 
-          {/* Export Consumption */}
-          <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-            <FileSpreadsheet className="w-10 h-10 text-purple-600 mb-3" />
-            <h3 className="font-bold text-gray-900 mb-2">Consumption History</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Detailed component consumption records with lot traceability
-            </p>
+          {/* Consumption Report Card */}
+          <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-purple-400 dark:hover:border-purple-500/60 transition-all flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1">
+                Consumption Audit History
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                Detailed transaction records including lot codes, stock before/after, and PCB IDs.
+              </p>
+            </div>
             <button
-              onClick={() => handleExport('/api/excel/export/consumption', `consumption_${new Date().toISOString().split('T')[0]}.xlsx`)}
-              className="btn w-full flex items-center justify-center space-x-2"
-              style={{ background: '#9333ea', color: 'white' }}
+              onClick={() =>
+                handleExport(
+                  '/api/excel/export/consumption',
+                  `stocksense_consumption_${new Date().toISOString().split('T')[0]}.xlsx`
+                )
+              }
+              className="btn btn-secondary w-full text-xs font-semibold"
             >
-              <Download className="w-4 h-4" />
-              <span>Export Consumption</span>
+              <Download className="w-4 h-4 mr-1.5" />
+              <span>Export Consumption (.xlsx)</span>
             </button>
           </div>
 
-          {/* Export Low Stock */}
-          <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-red-300 transition-colors">
-            <FileSpreadsheet className="w-10 h-10 text-red-600 mb-3" />
-            <h3 className="font-bold text-gray-900 mb-2">Low Stock Report</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Components below threshold with reorder recommendations
-            </p>
+          {/* Low Stock Report Card */}
+          <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-rose-400 dark:hover:border-rose-500/60 transition-all flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-3">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1">
+                Low Stock & Shortages
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                Reorder report prioritizing parts under 20% with shortage calculations and daily velocity.
+              </p>
+            </div>
             <button
-              onClick={() => handleExport('/api/excel/export/low-stock', `low_stock_${new Date().toISOString().split('T')[0]}.xlsx`)}
-              className="btn btn-danger w-full flex items-center justify-center space-x-2"
+              onClick={() =>
+                handleExport(
+                  '/api/excel/export/low-stock',
+                  `stocksense_low_stock_${new Date().toISOString().split('T')[0]}.xlsx`
+                )
+              }
+              className="btn btn-danger w-full text-xs font-semibold"
             >
-              <Download className="w-4 h-4" />
-              <span>Export Low Stock</span>
+              <Download className="w-4 h-4 mr-1.5" />
+              <span>Export Shortages (.xlsx)</span>
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="card bg-gray-50">
-        <h3 className="font-bold text-gray-900 mb-4">Features</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-gray-900">Automatic Column Mapping</p>
-              <p className="text-sm text-gray-600">Flexible column name detection</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-gray-900">Row-by-Row Validation</p>
-              <p className="text-sm text-gray-600">Detailed error reporting</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-gray-900">Upsert Support</p>
-              <p className="text-sm text-gray-600">Insert new or update existing components</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-gray-900">Rich Excel Exports</p>
-              <p className="text-sm text-gray-600">Formatted with summaries and styling</p>
-            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import toast from 'react-hot-toast';
-import { Factory, CheckCircle, XCircle } from 'lucide-react';
+import { Factory, CheckCircle, XCircle, AlertTriangle, Layers, Cpu, ArrowRight, Hash, Calendar, FileText } from 'lucide-react';
 
 const Production = () => {
   const [pcbs, setPcbs] = useState([]);
@@ -26,7 +26,7 @@ const Production = () => {
   const fetchPCBs = async () => {
     try {
       const response = await axiosInstance.get('/api/pcbs');
-      setPcbs(response.data.data.pcbs || []);
+      setPcbs(response.data.data?.pcbs || []);
     } catch (error) {
       console.error('Failed to fetch PCBs:', error);
     }
@@ -38,20 +38,21 @@ const Production = () => {
     setResult(null);
 
     try {
-      const payload = mode === 'pcb'
-        ? {
-          pcb_id: parseInt(formData.pcb_id),
-          quantity_produced: parseInt(formData.quantity_produced),
-          production_date: formData.production_date,
-          lot_number: formData.lot_number,
-          notes: formData.notes,
-        }
-        : {
-          component_string: formData.component_string,
-          lot_number: formData.lot_number,
-          production_date: formData.production_date,
-          notes: formData.notes,
-        };
+      const payload =
+        mode === 'pcb'
+          ? {
+              pcb_id: parseInt(formData.pcb_id, 10),
+              quantity_produced: parseInt(formData.quantity_produced, 10) || 1,
+              production_date: formData.production_date,
+              lot_number: formData.lot_number,
+              notes: formData.notes,
+            }
+          : {
+              component_string: formData.component_string,
+              lot_number: formData.lot_number,
+              production_date: formData.production_date,
+              notes: formData.notes,
+            };
 
       const response = await axiosInstance.post('/api/production', payload);
 
@@ -60,7 +61,7 @@ const Production = () => {
         data: response.data.data,
       });
 
-      toast.success('Production entry created successfully!');
+      toast.success('Production run logged & inventory deducted!');
 
       // Reset form
       setFormData({
@@ -71,7 +72,6 @@ const Production = () => {
         lot_number: '',
         notes: '',
       });
-
     } catch (error) {
       const errorData = error.response?.data;
 
@@ -88,199 +88,234 @@ const Production = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Production Entry</h1>
-        <p className="text-gray-600 mt-1">Record new production with automatic stock deduction</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          Record Production Run
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Log finished assembly batches with automatic atomic Bill of Materials stock deduction
+        </p>
       </div>
 
       {/* Mode Selector */}
-      <div className="card">
-        <h3 className="font-bold text-gray-900 mb-4">Production Mode</h3>
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setMode('pcb')}
-            className={`flex-1 p-4 rounded-lg border-2 transition-all ${mode === 'pcb'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-              }`}
-          >
-            <h4 className="font-bold text-gray-900">PCB-Based Production</h4>
-            <p className="text-sm text-gray-600 mt-1">
-              Select a PCB and quantity - components deducted based on BOM
-            </p>
-          </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <button
+          type="button"
+          onClick={() => setMode('pcb')}
+          className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+            mode === 'pcb'
+              ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-500 shadow-sm'
+              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-center space-x-3 mb-1.5">
+            <div className={`p-2 rounded-lg ${mode === 'pcb' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+              <Cpu className="w-4 h-4" />
+            </div>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">PCB BOM Production</h3>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 pl-11">
+            Select a configured PCB and quantity. Components are deducted according to the defined Bill of Materials.
+          </p>
+        </button>
 
-          <button
-            onClick={() => setMode('component_string')}
-            className={`flex-1 p-4 rounded-lg border-2 transition-all ${mode === 'component_string'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-              }`}
-          >
-            <h4 className="font-bold text-gray-900">Component String</h4>
-            <p className="text-sm text-gray-600 mt-1">
-              Enter component codes (e.g., "BZ/IC1/VR1") - deducts 1 unit each
-            </p>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setMode('component_string')}
+          className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+            mode === 'component_string'
+              ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-500 shadow-sm'
+              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-center space-x-3 mb-1.5">
+            <div className={`p-2 rounded-lg ${mode === 'component_string' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+              <Layers className="w-4 h-4" />
+            </div>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Component String Mode</h3>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 pl-11">
+            Input a delimiter-separated code string (e.g. BZ/IC1/VR1). Exactly 1 unit is deducted per unique code.
+          </p>
+        </button>
       </div>
 
       {/* Production Form */}
-      <form onSubmit={handleSubmit} className="card space-y-6">
-        <h2 className="text-xl font-bold text-gray-900">Production Details</h2>
+      <form onSubmit={handleSubmit} className="card p-6 sm:p-7 space-y-5">
+        <h2 className="text-base font-bold text-slate-900 dark:text-white pb-3 border-b border-slate-100 dark:border-slate-800">
+          Batch Parameters
+        </h2>
 
         {mode === 'pcb' ? (
-          <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="form-label">Select PCB *</label>
+              <label className="form-label">Select PCB Assembly *</label>
               <select
                 value={formData.pcb_id}
                 onChange={(e) => setFormData({ ...formData, pcb_id: e.target.value })}
-                className="form-input"
+                className="form-input text-xs"
                 required
               >
-                <option value="">Choose a PCB...</option>
+                <option value="">Select a registered PCB...</option>
                 {pcbs.map((pcb) => (
                   <option key={pcb.id} value={pcb.id}>
-                    {pcb.pcb_code} - {pcb.pcb_name}
+                    {pcb.pcb_code} &bull; {pcb.pcb_name}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="form-label">Quantity Produced *</label>
+              <label className="form-label">Units Produced *</label>
               <input
                 type="number"
                 value={formData.quantity_produced}
-                onChange={(e) => setFormData({ ...formData, quantity_produced: e.target.value })}
-                className="form-input"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    quantity_produced: Math.max(1, parseInt(e.target.value, 10) || 1),
+                  })
+                }
+                className="form-input text-sm font-semibold"
                 min="1"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Components will be deducted: quantity_per_pcb × quantity_produced
-              </p>
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                Total deductions = BOM component quantity &times; units produced
+              </span>
             </div>
-          </>
+          </div>
         ) : (
           <div>
-            <label className="form-label">Component String *</label>
+            <label className="form-label">Component String Expression *</label>
             <input
               type="text"
               value={formData.component_string}
               onChange={(e) => setFormData({ ...formData, component_string: e.target.value })}
-              className="form-input font-mono"
-              placeholder="CAP-10UF-001/RES-1K-001/LED-RED-5MM"
+              className="form-input font-mono text-xs uppercase"
+              placeholder="e.g. CAP-10UF-001/RES-1K-001/LED-RED-5MM"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Format: Component codes separated by "/" (e.g., "CAP-10UF-001/RES-1K-001/LED-RED-5MM")
-              <br />
-              Duplicates will be removed automatically. Exactly 1 unit deducted per component.
+            <p className="text-[11px] text-slate-400 mt-1.5">
+              Enter component codes separated by &quot;/&quot;. Duplicates are parsed out; 1 unit deducted per component.
             </p>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="form-label">Production Date *</label>
-            <input
-              type="date"
-              value={formData.production_date}
-              onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
-              className="form-input"
-              required
-            />
+            <label className="form-label">Manufacturing Date *</label>
+            <div className="relative">
+              <input
+                type="date"
+                value={formData.production_date}
+                onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
+                className="form-input text-xs"
+                required
+              />
+            </div>
           </div>
 
           <div>
-            <label className="form-label">Lot Number *</label>
+            <label className="form-label">Lot / Batch Tracking Code *</label>
             <input
               type="text"
               value={formData.lot_number}
               onChange={(e) => setFormData({ ...formData, lot_number: e.target.value })}
-              className="form-input font-mono"
-              placeholder="LOT-2025-001"
+              className="form-input font-mono text-xs uppercase"
+              placeholder="e.g. LOT-2026-B101"
               required
             />
           </div>
         </div>
 
         <div>
-          <label className="form-label">Notes</label>
+          <label className="form-label">Production Run Notes</label>
           <textarea
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="form-input"
-            rows="3"
-            placeholder="Optional production notes..."
+            className="form-input text-xs"
+            rows="2"
+            placeholder="Operator initials, shift, inspection notes..."
           ></textarea>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full btn btn-primary py-3 flex items-center justify-center space-x-2"
+          className="w-full btn btn-primary py-3 rounded-xl font-semibold text-sm shadow-md shadow-blue-500/20"
         >
           {loading ? (
             <>
-              <div className="spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
-              <span>Processing...</span>
+              <div className="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+              <span>Processing Stock Deductions...</span>
             </>
           ) : (
             <>
-              <Factory className="w-5 h-5" />
-              <span>Create Production Entry</span>
+              <Factory className="w-4 h-4 mr-2" />
+              <span>Execute Production Run & Deduct Stock</span>
             </>
           )}
         </button>
       </form>
 
-      {/* Result */}
+      {/* Result Card */}
       {result && (
-        <div className={`card ${result.success ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
-          <div className="flex items-start space-x-3">
+        <div
+          className={`card p-6 border-2 animate-fadeIn ${
+            result.success
+              ? 'border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20'
+              : 'border-rose-500/40 bg-rose-50/40 dark:bg-rose-950/20'
+          }`}
+        >
+          <div className="flex items-start space-x-3.5">
             {result.success ? (
-              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+              <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             ) : (
-              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+              <XCircle className="w-6 h-6 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
             )}
 
-            <div className="flex-1">
-              <h3 className={`font-bold text-lg ${result.success ? 'text-green-900' : 'text-red-900'}`}>
-                {result.success ? 'Production Entry Created!' : 'Production Failed'}
+            <div className="flex-1 min-w-0">
+              <h3 className={`font-bold text-base ${result.success ? 'text-emerald-900 dark:text-emerald-200' : 'text-rose-900 dark:text-rose-200'}`}>
+                {result.success ? 'Production Run Completed Successfully' : 'Production Execution Blocked'}
               </h3>
 
               {result.success ? (
-                <div className="mt-3 space-y-3">
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-gray-600">
-                      <strong>Production ID:</strong> #{result.data.productionEntry.id}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <strong>Lot Number:</strong> {result.data.productionEntry.lot_number}
-                    </p>
-                    {result.data.componentsParsed && (
-                      <p className="text-sm text-gray-600">
-                        <strong>Components Parsed:</strong> {result.data.componentsParsed.join(', ')}
-                      </p>
-                    )}
+                <div className="mt-4 space-y-4 text-xs">
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                      <span className="text-slate-400 block">Production ID</span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">#{result.data?.productionEntry?.id}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block">Lot Number</span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{result.data?.productionEntry?.lot_number}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block">Units Completed</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">{result.data?.productionEntry?.quantity_produced}</span>
+                    </div>
                   </div>
 
-                  {result.data.consumptionRecords?.length > 0 && (
-                    <div className="bg-white rounded-lg p-4">
-                      <h4 className="font-bold text-gray-900 mb-2">Stock Deductions:</h4>
-                      <div className="space-y-2">
+                  {result.data?.consumptionRecords?.length > 0 && (
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <h4 className="font-bold text-slate-900 dark:text-white mb-2.5">
+                        Stock Consumption Log ({result.data.consumptionRecords.length} items deducted):
+                      </h4>
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
                         {result.data.consumptionRecords.map((record, index) => (
-                          <div key={index} className="text-sm flex items-center justify-between border-b border-gray-100 pb-2">
+                          <div
+                            key={index}
+                            className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-850 text-slate-700 dark:text-slate-300 font-mono text-xs"
+                          >
                             <span>
-                              <strong>{record.part_number}</strong> - {record.component_name}
+                              <strong>{record.part_number}</strong> &bull; {record.component_name}
                             </span>
-                            <span className="font-mono">
-                              {record.stock_before} → {record.stock_after} (-{record.quantity_consumed})
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {record.stock_before} &rarr; {record.stock_after} (
+                              <span className="text-rose-600 dark:text-rose-400">-{record.quantity_consumed}</span>)
                             </span>
                           </div>
                         ))}
@@ -288,36 +323,38 @@ const Production = () => {
                     </div>
                   )}
 
-                  {result.data.procurementTriggers?.length > 0 && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <h4 className="font-bold text-yellow-900 mb-2">⚠️ Low Stock Alerts Generated:</h4>
-                      <div className="space-y-1">
-                        {result.data.procurementTriggers.map((trigger, index) => (
-                          <p key={index} className="text-sm text-yellow-800">
-                            • {trigger.part_number} - {trigger.component_name} (Stock: {trigger.current_stock}, Required: {trigger.monthly_requirement})
-                          </p>
+                  {result.data?.procurementTriggers?.length > 0 && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200">
+                      <h4 className="font-bold flex items-center gap-1.5 mb-1.5">
+                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                        Low Stock Procurement Alerts Triggered:
+                      </h4>
+                      <ul className="list-disc list-inside space-y-1 text-xs">
+                        {result.data.procurementTriggers.map((trig, index) => (
+                          <li key={index}>
+                            {trig.part_number} &bull; {trig.component_name} (Remaining: {trig.current_stock} / Monthly Req: {trig.monthly_requirement})
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="mt-3">
-                  <p className="text-red-800 mb-3">{result.error}</p>
+                <div className="mt-3 text-xs">
+                  <p className="text-rose-800 dark:text-rose-300 font-medium mb-3">{result.error}</p>
 
                   {result.insufficientStock?.length > 0 && (
-                    <div className="bg-white rounded-lg p-4">
-                      <h4 className="font-bold text-gray-900 mb-2">Insufficient Stock:</h4>
-                      <div className="space-y-2">
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60">
+                      <h4 className="font-bold text-rose-700 dark:text-rose-400 mb-2">Shortage Breakdown:</h4>
+                      <div className="space-y-1.5">
                         {result.insufficientStock.map((item, index) => (
-                          <div key={index} className="text-sm border-b border-gray-100 pb-2">
-                            <p>
-                              <strong>{item.part_number}</strong> - {item.component_name}
-                            </p>
-                            <p className="text-red-600">
-                              Required: {item.required}, Available: {item.available},
-                              Shortage: {item.shortage}
-                            </p>
+                          <div key={index} className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                              <strong className="text-slate-900 dark:text-white">{item.part_number}</strong> &bull; {item.component_name}
+                            </div>
+                            <div className="text-rose-600 dark:text-rose-400 font-mono font-bold">
+                              Need: {item.required} &bull; Available: {item.available} &bull; Deficit: {item.shortage}
+                            </div>
                           </div>
                         ))}
                       </div>
