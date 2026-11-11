@@ -4,3 +4,4 @@
 -- Run this in your Neon PostgreSQL SQL Editor:
 
 ALTER TABLE production_entries ALTER COLUMN pcb_id DROP NOT NULL;
+
