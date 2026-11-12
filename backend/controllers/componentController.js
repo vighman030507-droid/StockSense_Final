@@ -278,7 +278,7 @@ const deleteComponent = async (req, res) => {
 // Get low stock components
 const getLowStockComponents = async (req, res) => {
   try {
-    const thresholdPercentage = parseFloat(process.env.PROCUREMENT_THRESHOLD_PERCENTAGE || 20);
+    const threshold = parseFloat(process.env.PROCUREMENT_THRESHOLD_PERCENTAGE || 20) / 100;
 
     const result = await query(
       `
@@ -291,10 +291,9 @@ const getLowStockComponents = async (req, res) => {
         ROUND((current_stock_quantity::NUMERIC / NULLIF(monthly_required_quantity::NUMERIC, 0)) * 100, 2) AS stock_percentage,
         (monthly_required_quantity) - current_stock_quantity AS shortage_quantity
       FROM components
-      WHERE ROUND((current_stock_quantity::NUMERIC / NULLIF(monthly_required_quantity::NUMERIC, 0)) * 100, 2) <= $1
+      WHERE ROUND((current_stock_quantity::NUMERIC / NULLIF(monthly_required_quantity::NUMERIC, 0)) * 100, 2) <= 20
       ORDER BY stock_percentage ASC, shortage_quantity DESC
-    `,
-      [thresholdPercentage]
+    `
     );
 
     res.json({
@@ -302,14 +301,14 @@ const getLowStockComponents = async (req, res) => {
       data: {
         low_stock_components: result.rows,
         total: result.rows.length,
-        threshold_percentage: thresholdPercentage,
+        threshold_percentage: threshold * 100,
       },
     });
   } catch (error) {
     console.error('Get low stock components error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch low stock components',
+      error: 'Failed to fetch low stock componentss',
     });
   }
 };

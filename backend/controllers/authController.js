@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
-const { generateToken } = require('../middleware/auth');
 
 const login = async (req, res) => {
   try {
@@ -15,7 +15,7 @@ const login = async (req, res) => {
     }
 
     const result = await pool.query(
-      'SELECT id, username, email, password_hash, role FROM users WHERE username = $1',
+      'SELECT id, username, password_hash, role FROM users WHERE username = $1',
       [username]
     );
 
@@ -37,7 +37,11 @@ const login = async (req, res) => {
       });
     }
 
-    const token = generateToken(user);
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET || 'defaultsecret',
+      { expiresIn: '1d' }
+    );
 
     return res.status(200).json({
       success: true,

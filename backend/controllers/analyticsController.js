@@ -125,7 +125,7 @@ const getTopConsumedComponents = async (req, res) => {
  */
 const getLowStockComponents = async (req, res) => {
   try {
-    const thresholdPercent = parseFloat(process.env.PROCUREMENT_THRESHOLD_PERCENTAGE || 20);
+    const thresholdPercent = parseFloat(process.env.PROCUREMENT_THRESHOLD_PERCENTAGE || 20) / 100;
 
     const queryText = `
       SELECT 
@@ -137,16 +137,16 @@ const getLowStockComponents = async (req, res) => {
         ROUND((current_stock_quantity::NUMERIC / NULLIF(monthly_required_quantity::NUMERIC, 0)) * 100, 2) AS stock_percentage,
         (monthly_required_quantity) - current_stock_quantity AS shortage_quantity
       FROM components
-      WHERE ROUND((current_stock_quantity::NUMERIC / NULLIF(monthly_required_quantity::NUMERIC, 0)) * 100, 2) <= $1
+      WHERE ROUND((current_stock_quantity::NUMERIC / NULLIF(monthly_required_quantity::NUMERIC, 0)) * 100, 2) <= 20
       ORDER BY stock_percentage ASC, shortage_quantity DESC
     `;
 
-    const result = await query(queryText, [thresholdPercent]);
+    const result = await query(queryText);
 
     res.json({
       success: true,
       count: result.rows.length,
-      threshold_percentage: thresholdPercent,
+      threshold_percentage: thresholdPercent * 100,
       data: result.rows
     });
   } catch (error) {

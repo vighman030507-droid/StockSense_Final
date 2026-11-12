@@ -185,55 +185,36 @@ This allows spreadsheet-based inventory workflows to be integrated into the appl
 
 ## Frontend
 
-- React 18
-- Vite 7 (optimized manual chunking for lightning-fast loads)
-- Tailwind CSS 3 with full Dark & Light theme engine
-- Recharts (theme-adaptive data visualizations)
-- Lucide React iconography
-- React Hot Toast
-- React Router 6
-- Axios client with JWT interceptor
+- React
+- Vite
+- JavaScript
+- Axios
 
 ## Backend
 
 - Node.js
 - Express.js
-- PostgreSQL with connection pooling (`pg`)
-- Helmet (security headers)
-- Express Rate Limit (DDoS & brute force mitigation)
-- JWT Authentication & bcrypt hashing
-- Multer & xlsx for spreadsheet processing
-- CORS with Vercel origin whitelisting
+- PostgreSQL
+- `pg`
+- JWT
+- bcrypt
+- dotenv
+- CORS
+- Multer
+- xlsx
+- Nodemon
 
 ## Database
 
-- Neon PostgreSQL (AWS Asia Pacific Singapore)
-- SSL connection pooling with automated migration scripts
+- PostgreSQL
+- Neon PostgreSQL
 
 ## Deployment
 
-- **Frontend:** Vercel (Continuous Deployment from `main`)
-- **Backend:** Render (Web Service from `main`)
-- **Database:** Neon PostgreSQL (Cloud Lakebase)
-- **Source Control:** GitHub
-
----
-
-# 🗄️ Database Setup & Non-Destructive Migrations
-
-### For Fresh Deployments:
-Execute [`backend/sql/schema.sql`](file:///Users/vighman/Desktop/StockSense_Final/backend/sql/schema.sql) in your PostgreSQL or Neon console.
-
-### For Existing Live Deployments:
-**DO NOT re-run `schema.sql` on an existing database**, as it contains `DROP TABLE CASCADE` which will wipe existing inventory and user passwords!
-
-Instead, execute the safe additive migration in [`backend/sql/migration_pcb_id_nullable.sql`](file:///Users/vighman/Desktop/StockSense_Final/backend/sql/migration_pcb_id_nullable.sql):
-
-```sql
--- Run this in Neon SQL Editor to allow Component-String production runs:
-ALTER TABLE production_entries ALTER COLUMN pcb_id DROP NOT NULL;
-```
-This migration is non-destructive, instant, and preserves all your live data, users, passwords, and logs.
+- Vercel
+- Render
+- Neon
+- GitHub
 
 ---
 

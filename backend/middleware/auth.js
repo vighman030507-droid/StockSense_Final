@@ -46,7 +46,7 @@ const generateToken = (user) => {
   const payload = {
     id: user.id,
     username: user.username,
-    email: user.email || null,
+    email: user.email,
     role: user.role,
   };
 

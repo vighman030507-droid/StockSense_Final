@@ -11,17 +11,5 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        // manualChunks disabled to avoid runtime chunk ordering issues
-        // manualChunks: {
-        //   'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-        //   'vendor-charts': ['recharts'],
-        //   'vendor-ui': ['lucide-react', 'react-hot-toast'],
-        // }
-      }
-    }
   }
 })

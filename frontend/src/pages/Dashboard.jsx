@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
-import { Package, Cpu, AlertTriangle, Factory, ArrowUpRight, TrendingUp, TrendingDown, Layers, Clock } from 'lucide-react';
+import { Package, Cpu, AlertTriangle, Factory, TrendingUp, TrendingDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -21,17 +20,21 @@ const Dashboard = () => {
     try {
       setLoading(true);
 
-      const [componentsRes, pcbsRes, lowStockRes, productionRes] = await Promise.all([
-        axiosInstance.get('/api/components'),
-        axiosInstance.get('/api/pcbs'),
-        axiosInstance.get('/api/components/low-stock'),
-        axiosInstance.get('/api/production?limit=5'),
-      ]);
+      // Fetch components
+      const componentsRes = await axiosInstance.get('/api/components');
+      const components = componentsRes.data.data.components || [];
 
-      const components = componentsRes.data.data?.components || [];
-      const pcbs = pcbsRes.data.data?.pcbs || [];
-      const lowStock = lowStockRes.data.data?.low_stock_components || [];
-      const production = productionRes.data.data?.production_entries || [];
+      // Fetch PCBs
+      const pcbsRes = await axiosInstance.get('/api/pcbs');
+      const pcbs = pcbsRes.data.data.pcbs || [];
+
+      // Fetch low stock
+      const lowStockRes = await axiosInstance.get('/api/components/low-stock');
+      const lowStock = lowStockRes.data.data.low_stock_components || [];
+
+      // Fetch recent production
+      const productionRes = await axiosInstance.get('/api/production?limit=5');
+      const production = productionRes.data.data.production_entries || [];
 
       setStats({
         totalComponents: components.length,
@@ -49,197 +52,118 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-3">
-        <div className="spinner w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full"></div>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Loading operations console...</p>
+      <div className="flex items-center justify-center h-96">
+        <div className="spinner w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
   const statCards = [
     {
-      title: 'Active Components',
+      title: 'Total Components',
       value: stats.totalComponents,
-      subtitle: 'Managed inventory parts',
       icon: Package,
-      gradient: 'from-blue-600 to-cyan-600',
-      iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 dark:bg-blue-500/20',
-      link: '/components',
+      color: 'blue',
+      trend: null,
     },
     {
-      title: 'Configured PCBs',
+      title: 'Total PCBs',
       value: stats.totalPCBs,
-      subtitle: 'Bill of Materials registered',
       icon: Cpu,
-      gradient: 'from-indigo-600 to-purple-600',
-      iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 dark:bg-indigo-500/20',
-      link: '/pcbs',
+      color: 'green',
+      trend: null,
     },
     {
-      title: 'Low Stock Alerts',
+      title: 'Low Stock Items',
       value: stats.lowStockCount,
-      subtitle: stats.lowStockCount > 0 ? 'Requires procurement' : 'Healthy inventory level',
       icon: AlertTriangle,
-      gradient: stats.lowStockCount > 0 ? 'from-amber-600 to-rose-600' : 'from-slate-600 to-slate-700',
-      iconBg: stats.lowStockCount > 0 
-        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 dark:bg-rose-500/20' 
-        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20',
-      link: '/procurement',
-      alert: stats.lowStockCount > 0,
+      color: stats.lowStockCount > 0 ? 'red' : 'gray',
+      trend: stats.lowStockCount > 0 ? 'down' : null,
     },
     {
-      title: 'Recent Production Runs',
+      title: 'Production Entries',
       value: stats.recentProduction.length,
-      subtitle: 'Latest logged production batches',
       icon: Factory,
-      gradient: 'from-emerald-600 to-teal-600',
-      iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20',
-      link: '/production',
+      color: 'purple',
+      trend: 'up',
     },
   ];
 
   return (
-    <div className="space-y-7 animate-fadeIn">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Operations Dashboard
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Real-time PCB inventory telemetry, BOM consumption, and automated replenishment
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link to="/production" className="btn btn-primary shadow-sm shadow-blue-500/20">
-            <Factory className="w-4 h-4 mr-2" />
-            <span>New Production Run</span>
-          </Link>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-600 mt-1">Welcome to PCB Inventory Management System</p>
       </div>
 
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
+          const colorClasses = {
+            blue: 'bg-blue-500',
+            green: 'bg-green-500',
+            red: 'bg-red-500',
+            purple: 'bg-purple-500',
+            gray: 'bg-gray-500',
+          };
+
           return (
-            <Link
-              key={index}
-              to={stat.link}
-              className="card p-5 group hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:shadow-md transition-all duration-200"
-            >
-              <div className="flex items-start justify-between">
+            <div key={index} className="card animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {stat.title}
-                  </p>
-                  <div className="flex items-baseline space-x-2 mt-2">
-                    <span className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                      {stat.value}
-                    </span>
-                    {stat.alert && (
-                      <span className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center">
-                        <TrendingDown className="w-3.5 h-3.5 mr-0.5" />
-                        Action
-                      </span>
+                  <p className="text-gray-600 text-sm font-medium">{stat.title}</p>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <h3 className="text-3xl font-bold text-gray-900">{stat.value}</h3>
+                    {stat.trend === 'up' && (
+                      <TrendingUp className="w-5 h-5 text-green-500" />
+                    )}
+                    {stat.trend === 'down' && (
+                      <TrendingDown className="w-5 h-5 text-red-500" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    {stat.subtitle}
-                  </p>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.iconBg} group-hover:scale-105 transition-transform`}>
-                  <Icon className="w-5 h-5" />
+                <div className={`p-4 rounded-full ${colorClasses[stat.color]}`}>
+                  <Icon className="w-8 h-8 text-white" />
                 </div>
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
 
-      {/* Recent Production Table Card */}
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-blue-50 dark:bg-blue-950/50 rounded-lg text-blue-600 dark:text-blue-400">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                Recent Production Batches
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Latest PCB lots completed with stock deducted
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/production"
-            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center"
-          >
-            <span>View All Runs</span>
-            <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-          </Link>
-        </div>
+      {/* Recent Production */}
+      <div className="card">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Production Entries</h2>
 
         {stats.recentProduction.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-            <Factory className="w-10 h-10 text-slate-400 mx-auto mb-2 opacity-50" />
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No production entries logged yet</p>
-            <p className="text-xs text-slate-400 mt-1">Start by recording your first PCB run to see consumption metrics</p>
-            <Link to="/production" className="btn btn-secondary text-xs mt-4">
-              Log Production
-            </Link>
-          </div>
+          <p className="text-gray-500 text-center py-8">No production entries yet</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Batch ID</th>
-                  <th>Target Assembly</th>
-                  <th>Units Produced</th>
-                  <th>Lot Code</th>
-                  <th>Timestamp</th>
+                  <th>ID</th>
+                  <th>PCB</th>
+                  <th>Quantity</th>
+                  <th>Lot Number</th>
+                  <th>Date</th>
                 </tr>
               </thead>
               <tbody>
                 {stats.recentProduction.map((entry) => (
                   <tr key={entry.id}>
-                    <td className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
-                      #{entry.id}
-                    </td>
-                    <td className="font-medium">
-                      {entry.pcb_name ? (
-                        <div className="flex items-center space-x-2">
-                          <Cpu className="w-4 h-4 text-slate-400" />
-                          <span>{entry.pcb_name}</span>
-                          {entry.pcb_code && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                              {entry.pcb_code}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 text-xs rounded bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 font-mono">
-                          Component String Run
-                        </span>
-                      )}
-                    </td>
-                    <td className="font-bold text-slate-900 dark:text-slate-100">
-                      {entry.quantity_produced} <span className="text-xs font-normal text-slate-400">units</span>
-                    </td>
+                    <td className="font-mono">#{entry.id}</td>
+                    <td>{entry.pcb_name || 'Component String'}</td>
+                    <td>{entry.quantity_produced}</td>
                     <td>
-                      <code className="text-xs font-mono font-semibold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {entry.lot_number || 'N/A'}
+                      <code className="bg-gray-100 px-2 py-1 rounded">
+                        {entry.lot_number}
                       </code>
                     </td>
-                    <td className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(entry.production_date).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                    <td className="text-gray-600">
+                      {new Date(entry.production_date).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}
@@ -249,51 +173,36 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Quick Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="card p-5 bg-gradient-to-br from-blue-50/60 to-white dark:from-slate-900 dark:to-slate-900/90 border-blue-200/80 dark:border-blue-900/40">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
-            <Package className="w-5 h-5" />
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white text-base mb-1">
-            Component Inventory
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
-            Register new electronic components, calibrate monthly requirements, and adjust stock.
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="card bg-blue-50 border-2 border-blue-200">
+          <h3 className="font-bold text-gray-900 mb-2">Need to add components?</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Manage your component inventory quickly
           </p>
-          <Link to="/components" className="btn btn-secondary w-full text-xs font-semibold">
-            Manage Components →
-          </Link>
+          <a href="/components" className="btn btn-primary">
+            Go to Components
+          </a>
         </div>
 
-        <div className="card p-5 bg-gradient-to-br from-indigo-50/60 to-white dark:from-slate-900 dark:to-slate-900/90 border-indigo-200/80 dark:border-indigo-900/40">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
-            <Layers className="w-5 h-5" />
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white text-base mb-1">
-            PCB Bill of Materials
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
-            Configure PCB definitions and associate exact component quantities per board.
+        <div className="card bg-green-50 border-2 border-green-200">
+          <h3 className="font-bold text-gray-900 mb-2">Record production?</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Log new production entries with automatic stock deduction
           </p>
-          <Link to="/pcbs" className="btn btn-secondary w-full text-xs font-semibold">
-            Configure PCBs →
-          </Link>
+          <a href="/production" className="btn btn-success">
+            Create Production
+          </a>
         </div>
 
-        <div className="card p-5 bg-gradient-to-br from-purple-50/60 to-white dark:from-slate-900 dark:to-slate-900/90 border-purple-200/80 dark:border-purple-900/40">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
-            <BarChart3 className="w-5 h-5" />
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white text-base mb-1">
-            Consumption Analytics
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
-            Inspect lot-level consumption traces, efficiency ratios, and component usage trends.
+        <div className="card bg-purple-50 border-2 border-purple-200">
+          <h3 className="font-bold text-gray-900 mb-2">View analytics?</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Get insights into consumption and trends
           </p>
-          <Link to="/analytics" className="btn btn-secondary w-full text-xs font-semibold">
-            View Analytics →
-          </Link>
+          <a href="/analytics" className="btn" style={{ background: '#9333ea', color: 'white' }}>
+            View Analytics
+          </a>
         </div>
       </div>
     </div>
