@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "outputDirectory": "dist"
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
